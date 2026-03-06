@@ -364,10 +364,11 @@
   function getSlides(c, r) {
     const out = [];
     for (const [dc,dr] of [[0,-1],[0,1],[-1,0],[1,0]]) {
-      let nc=c+dc, nr=r+dr;
+      let nc=c+dc, nr=r+dr, lc=null, lr=null;
       while (nc>=0&&nc<11&&nr>=0&&nr<11&&!grid[nc][nr]) {
-        out.push([nc,nr]); nc+=dc; nr+=dr;
+        lc=nc; lr=nr; nc+=dc; nr+=dr;
       }
+      if (lc !== null) out.push([lc, lr]);
     }
     return out;
   }
