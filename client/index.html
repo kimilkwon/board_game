@@ -194,7 +194,6 @@
     .cell.vs { outline: 3px solid #22d3ee; outline-offset: -3px; animation: vp .85s ease-in-out infinite alternate; }
     .cell.vk { outline: 3px solid #c084fc; outline-offset: -3px; animation: vp .85s ease-in-out infinite alternate; }
     .cell.sel  { outline: 3px solid #f97316; outline-offset: -3px; }
-    .cell.pend { outline: 3px solid #facc15; outline-offset: -3px; }
     @keyframes vp { to { filter: brightness(1.3); } }
     .oasis-mark { position: absolute; font-size: 22px; opacity: .65; pointer-events: none; }
     .cell.not-my-turn { cursor: default; }
@@ -320,18 +319,6 @@
   </div>
 </div>
 
-<!-- ── Confirm Dialog ──────────────────────────────────── -->
-<div class="overlay" id="d-conf" style="display:none">
-  <div class="dlg">
-    <h3>이동 확인</h3>
-    <p id="conf-msg"></p>
-    <div class="btn-row">
-      <button class="btn btn-yes" id="btn-yes">네, 이동합니다</button>
-      <button class="btn btn-no"  id="btn-no">아니오</button>
-    </div>
-  </div>
-</div>
-
 <!-- ── Win Dialog ─────────────────────────────────────── -->
 <div class="overlay" id="d-win" style="display:none">
   <div class="dlg win-dlg">
@@ -356,7 +343,7 @@
   let oppName = '';
 
   let grid, turn, done;
-  let sel, vS, vK, pend, pendType;
+  let sel, vS, vK;
   let tLeft, tId;
 
   // ── Screen management ──────────────────────────────────
@@ -399,9 +386,8 @@
     el.innerHTML = '';
     const sSet = new Set(vS.map(([a,b])=>`${a},${b}`));
     const kSet = new Set(vK.map(([a,b])=>`${a},${b}`));
-    const selKey  = sel  ? `${sel[0]},${sel[1]}`   : null;
-    const pendKey = pend ? `${pend[0]},${pend[1]}` : null;
-    const myTurn  = (mode === 'online') ? (myColor === turn) : true;
+    const selKey = sel ? `${sel[0]},${sel[1]}` : null;
+    const myTurn = (mode === 'online') ? (myColor === turn) : true;
 
     // Corner + col labels
     el.appendChild(mkLbl(''));
@@ -415,10 +401,9 @@
         const cell = document.createElement('div');
         cell.className = 'cell ' + type;
         if (!myTurn) cell.classList.add('not-my-turn');
-        if      (key === selKey)   cell.classList.add('sel');
-        else if (key === pendKey)  cell.classList.add('pend');
-        else if (sSet.has(key))    cell.classList.add('vs');
-        else if (kSet.has(key))    cell.classList.add('vk');
+        if      (key === selKey)  cell.classList.add('sel');
+        else if (sSet.has(key))   cell.classList.add('vs');
+        else if (kSet.has(key))   cell.classList.add('vk');
         if (type==='oasis' && !grid[c][r]) {
           const m = document.createElement('div');
           m.className = 'oasis-mark'; m.textContent = '🌴';
@@ -487,7 +472,7 @@
 
   // ── Interaction ────────────────────────────────────────
   function onCell(c, r) {
-    if (done || pend !== null) return;
+    if (done) return;
     if (mode==='online' && myColor !== turn) return;
 
     const key = `${c},${r}`;
@@ -495,12 +480,23 @@
     const kSet = new Set(vK.map(([a,b])=>`${a},${b}`));
 
     if (sSet.has(key) || kSet.has(key)) {
-      pend = [c, r];
-      pendType = sSet.has(key) ? 'slide' : 'knight';
-      document.getElementById('conf-msg').innerHTML =
-        `<b>${ALPHA[c]}${r+1}</b> 칸으로 <b>${pendType==='slide'?'슬라이드':'L자'} 이동</b>하겠습니까?`;
-      document.getElementById('d-conf').style.display = 'flex';
-      render();
+      const [fc,fr] = sel, [tc,tr] = [c,r];
+      const mover = grid[fc][fr];
+      if (mode === 'online') {
+        sock.emit('move', {roomId, fc, fr, tc, tr});
+        sel=null; vS=[]; vK=[]; render();
+      } else {
+        grid[tc][tr]=mover; grid[fc][fr]=null;
+        sel=null; vS=[]; vK=[];
+        if (tc===5 && tr===5) {
+          done=true; clearInterval(tId);
+          render();
+          setTimeout(()=>showWin(`${mover==='black'?'흑(♞)':'백(♘)'} 승리! 🎉`), 300);
+          return;
+        }
+        turn=turn==='black'?'white':'black';
+        render(); updateStatus(); startLocalTimer();
+      }
       return;
     }
 
@@ -512,35 +508,6 @@
     sel=null; vS=[]; vK=[]; render();
   }
 
-  document.getElementById('btn-yes').addEventListener('click', () => {
-    document.getElementById('d-conf').style.display = 'none';
-    if (!pend || !sel) { pend=null; return; }
-    const [fc,fr]=sel, [tc,tr]=pend;
-    const mover = grid[fc][fr];
-
-    if (mode === 'online') {
-      sock.emit('move', {roomId, fc, fr, tc, tr});
-      pend=null; sel=null; vS=[]; vK=[];
-      render();
-    } else {
-      grid[tc][tr]=mover; grid[fc][fr]=null;
-      sel=null; vS=[]; vK=[]; pend=null;
-      if (tc===5 && tr===5) {
-        done=true; clearInterval(tId);
-        render();
-        setTimeout(()=>showWin(`${mover==='black'?'흑(♞)':'백(♘)'} 승리! 🎉`), 300);
-        return;
-      }
-      turn=turn==='black'?'white':'black';
-      render(); updateStatus(); startLocalTimer();
-    }
-  });
-
-  document.getElementById('btn-no').addEventListener('click', () => {
-    document.getElementById('d-conf').style.display='none';
-    pend=null; render();
-  });
-
   // ── Local timer ────────────────────────────────────────
   function startLocalTimer() {
     clearInterval(tId); tLeft=60;
@@ -549,8 +516,7 @@
       tLeft--;
       drawTimer();
       if(tLeft<=0){
-        document.getElementById('d-conf').style.display='none';
-        pend=null; sel=null; vS=[]; vK=[];
+        sel=null; vS=[]; vK=[];
         turn=turn==='black'?'white':'black';
         render(); updateStatus(); startLocalTimer();
       }
@@ -564,14 +530,14 @@
     for(const[c,r] of BLACK_START) grid[c][r]='black';
     for(const[c,r] of WHITE_START) grid[c][r]='white';
     turn='black'; done=false;
-    sel=null; vS=[]; vK=[]; pend=null;
+    sel=null; vS=[]; vK=[];
     updateStatus(); render();
   }
 
   // ── Apply server state (online) ───────────────────────
   function applyState(state) {
     grid=state.grid; turn=state.turn; done=state.done; tLeft=state.timeLeft;
-    sel=null; vS=[]; vK=[]; pend=null;
+    sel=null; vS=[]; vK=[];
     updateStatus(); render(); drawTimer();
   }
 
@@ -589,8 +555,6 @@
     });
 
     sock.on('state', state => {
-      document.getElementById('d-conf').style.display='none';
-      pend=null;
       applyState(state);
     });
 
@@ -638,7 +602,6 @@
   document.getElementById('btn-back').addEventListener('click', ()=>{
     clearInterval(tId);
     if(mode==='online' && sock) sock.emit('cancel');
-    document.getElementById('d-conf').style.display='none';
     document.getElementById('d-win').style.display='none';
     show('s-menu');
   });
