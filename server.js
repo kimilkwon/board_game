@@ -387,9 +387,10 @@ function bPlayCard(room,playerIdx,cardId,targetSid) {
       pl.hand.splice(ci,0,card); // put back
       return {ok:false,msg:'MISSED!는 BANG! 응답용입니다'};
     case 'beer':
+      if(pl.hp>=pl.maxHp){pl.hand.splice(ci,0,card);return {ok:false,msg:'이미 최대 HP입니다! 맥주를 쓸 수 없습니다.'};}
       room.bdisc.push(card);
-      if(pl.hp<pl.maxHp){pl.hp++;bLog(room,`🍺 ${pl.name}이 맥주 마싘 (+1 HP, ${pl.hp}/${pl.maxHp})`);}
-      else bLog(room,`🍺 ${pl.name}이 맥주 마싘 (이미 최대 HP)`);
+      pl.hp++;
+      bLog(room,`🍺 ${pl.name}이 맥주 마심 (+1 HP, ${pl.hp}/${pl.maxHp})`);
       bBroadcast(room); break;
     case 'stagecoach':{
       room.bdisc.push(card);
@@ -407,6 +408,12 @@ function bPlayCard(room,playerIdx,cardId,targetSid) {
       bLog(room,`🏹 ${pl.name}이 인디언! 모두 BANG! 또는 피해`);
       room.bpending={type:'indians',attackerIdx:playerIdx,pendingList:[...plist]};
       bBroadcast(room); break;}
+    case 'duel':
+      room.bdisc.push(card);
+      bLog(room,`⚔️ ${pl.name}이 ${room.bplayers[ti].name}에게 결투 신청!`);
+      // Target responds first, then attacker, back and forth until someone forfeits
+      room.bpending={type:'duel',attackerIdx:playerIdx,duelCurrent:ti,duelOther:playerIdx};
+      bBroadcast(room); break;
     case 'gatling':{
       room.bdisc.push(card);
       const plist=room.bplayers.map((_,i)=>i).filter(i=>i!==playerIdx&&room.bplayers[i].alive);
