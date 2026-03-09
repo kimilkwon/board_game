@@ -162,32 +162,53 @@
     .bg-hand-title{font-size:.8rem;color:#7a9cc0;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
     .bg-hand-cards{display:flex;gap:8px;flex-wrap:wrap;}
 
-    /* Cards */
+    /* ── Cards ───────────────────────────────────────────── */
     .bg-card{
-      width:70px;height:100px;border-radius:8px;border:2px solid transparent;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      width:84px;height:120px;border-radius:10px;
+      border:2px solid rgba(255,255,255,.12);
+      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
       cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;
-      padding:4px;font-size:.68rem;text-align:center;gap:2px;position:relative;
-      background:rgba(255,255,255,.08);
+      padding:6px 5px;position:relative;overflow:hidden;
+      box-shadow:2px 4px 14px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);
     }
-    .bg-card:hover{transform:translateY(-6px);box-shadow:0 8px 20px rgba(0,0,0,.5);}
-    .bg-card.selected{border-color:#ffd700!important;box-shadow:0 0 14px rgba(255,215,0,.5);transform:translateY(-8px);}
-    .bg-card.disabled{opacity:.4;cursor:not-allowed;}
-    .bg-card.disabled:hover{transform:none;}
-    .bg-card .card-suit{position:absolute;top:3px;left:5px;font-size:.65rem;opacity:.6;}
-    .bg-card .card-val{position:absolute;bottom:3px;right:5px;font-size:.65rem;opacity:.6;}
-    .bg-card .card-icon{font-size:1.3rem;}
-    .bg-card .card-name{font-size:.6rem;font-weight:700;line-height:1.2;}
-    /* Card type colors */
-    .ct-bang{background:rgba(127,29,29,.5);border-color:rgba(239,68,68,.3);}
-    .ct-missed{background:rgba(30,30,40,.5);border-color:rgba(107,114,128,.3);}
-    .ct-beer{background:rgba(20,60,20,.5);border-color:rgba(34,197,94,.3);}
-    .ct-draw{background:rgba(60,50,10,.5);border-color:rgba(234,179,8,.3);}
-    .ct-area{background:rgba(80,30,10,.5);border-color:rgba(249,115,22,.3);}
-    .ct-duel{background:rgba(60,10,80,.5);border-color:rgba(168,85,247,.3);}
-    .ct-saloon{background:rgba(10,60,60,.5);border-color:rgba(20,184,166,.3);}
-    .ct-equip{background:rgba(10,30,80,.5);border-color:rgba(59,130,246,.3);}
-    .ct-weapon{background:rgba(10,20,70,.5);border-color:rgba(29,78,216,.4);}
+    /* Subtle diagonal texture */
+    .bg-card::before{
+      content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
+      background:repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(0,0,0,.06) 7px,rgba(0,0,0,.06) 8px);
+    }
+    /* Shine overlay */
+    .bg-card::after{
+      content:'';position:absolute;top:0;left:0;right:0;height:40%;border-radius:8px 8px 0 0;pointer-events:none;
+      background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 100%);
+    }
+    .bg-card:hover{transform:translateY(-9px);box-shadow:2px 14px 30px rgba(0,0,0,.75);}
+    .bg-card.selected{border-color:#ffd700!important;box-shadow:0 0 22px rgba(255,215,0,.65);transform:translateY(-11px);}
+    .bg-card.disabled{opacity:.38;cursor:not-allowed;}
+    .bg-card.disabled:hover{transform:none;box-shadow:2px 4px 14px rgba(0,0,0,.55);}
+
+    /* Corner pip */
+    .card-corner{display:flex;flex-direction:column;align-items:center;line-height:1;z-index:1;}
+    .card-tl{align-self:flex-start;}
+    .card-br{align-self:flex-end;transform:rotate(180deg);}
+    .card-corner .cv{font-size:.68rem;font-weight:900;text-shadow:0 1px 4px rgba(0,0,0,.7);}
+    .card-corner .cs{font-size:.6rem;opacity:.85;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+
+    /* Center art */
+    .card-center{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;}
+    .card-icon{font-size:1.8rem;filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));line-height:1;}
+    .card-name{font-size:.53rem;font-weight:900;text-align:center;line-height:1.25;
+      text-shadow:0 1px 4px rgba(0,0,0,.8);letter-spacing:.04em;word-break:keep-all;}
+
+    /* ── Card type gradients (western theme) ── */
+    .ct-bang{background:linear-gradient(155deg,#6b0000 0%,#991b1b 45%,#b91c1c 100%);border-color:#ef4444;}
+    .ct-missed{background:linear-gradient(155deg,#1a1f2e 0%,#2d3748 50%,#3d4a60 100%);border-color:#94a3b8;}
+    .ct-beer{background:linear-gradient(155deg,#3d1a00 0%,#7c3800 50%,#a16207 100%);border-color:#d97706;}
+    .ct-draw{background:linear-gradient(155deg,#2d1a00 0%,#78350f 50%,#9a5a00 100%);border-color:#f59e0b;}
+    .ct-area{background:linear-gradient(155deg,#3a0e00 0%,#7c2d12 50%,#9a3412 100%);border-color:#fb923c;}
+    .ct-duel{background:linear-gradient(155deg,#2d0050 0%,#581c87 50%,#7c3aad 100%);border-color:#c084fc;}
+    .ct-saloon{background:linear-gradient(155deg,#00201f 0%,#134e4a 50%,#0f766e 100%);border-color:#2dd4bf;}
+    .ct-equip{background:linear-gradient(155deg,#07153a 0%,#1e3a5f 50%,#1e40af 100%);border-color:#60a5fa;}
+    .ct-weapon{background:linear-gradient(155deg,#08080f 0%,#13132b 50%,#1e1e3f 100%);border-color:#818cf8;}
 
     /* Action buttons */
     .bg-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
@@ -338,8 +359,8 @@
         <span>덱</span>
       </div>
       <div class="bg-discard" id="bg-discard">
-        <span id="bg-discard-icon" style="font-size:1.4rem">🃟</span>
-        <span id="bg-discard-info" style="font-size:.6rem;color:#6b7280">버린 카드</span>
+        <span style="font-size:1.4rem">🃟</span>
+        <span style="font-size:.6rem;color:#6b7280">버린 카드</span>
       </div>
     </div>
     <div class="bg-log" id="bg-log"></div>
@@ -681,9 +702,19 @@ function bangRenderState(s){
   // Deck + Discard
   document.getElementById('bg-deck-count').textContent=s.deckCount+'장';
   const dt=s.discardTop;
+  const discardEl=document.getElementById('bg-discard');
   if(dt){
-    document.getElementById('bg-discard-icon').textContent=CARD_ICON[dt.type]||'🃟';
-    document.getElementById('bg-discard-info').textContent=(CARD_NAME[dt.type]||dt.type)+' '+dt.suit+(dt.value||'');
+    discardEl.className=`bg-discard bg-card ${CARD_CLASS[dt.type]||''}`;
+    discardEl.innerHTML=`
+      <div class="card-corner card-tl"><span class="cv">${dt.value||''}</span><span class="cs">${dt.suit||''}</span></div>
+      <div class="card-center">
+        <div class="card-icon">${CARD_ICON[dt.type]||'🃟'}</div>
+        <div class="card-name">${CARD_NAME[dt.type]||dt.type}</div>
+      </div>
+      <div class="card-corner card-br"><span class="cv">${dt.value||''}</span><span class="cs">${dt.suit||''}</span></div>`;
+  } else {
+    discardEl.className='bg-discard';
+    discardEl.innerHTML=`<span style="font-size:1.4rem">🃟</span><span style="font-size:.6rem;color:#6b7280">버린 카드</span>`;
   }
 
   // Log
@@ -754,11 +785,15 @@ function bangRenderState(s){
 
       const div=document.createElement('div');
       div.className=`bg-card ${CARD_CLASS[card.type]||''}${isSelected?' selected':''}${cardDisabled?' disabled':''}`;
+      const cv=card.value||'';
+      const cs=card.suit||'';
       div.innerHTML=`
-        <span class="card-suit">${card.suit||''}</span>
-        <span class="card-icon">${CARD_ICON[card.type]||'🃟'}</span>
-        <span class="card-name">${CARD_NAME[card.type]||card.type}</span>
-        <span class="card-val">${card.value||''}</span>
+        <div class="card-corner card-tl"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>
+        <div class="card-center">
+          <div class="card-icon">${CARD_ICON[card.type]||'🃟'}</div>
+          <div class="card-name">${CARD_NAME[card.type]||card.type}</div>
+        </div>
+        <div class="card-corner card-br"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>
       `;
 
       if(!cardDisabled){
