@@ -3,826 +3,829 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🐎 말달리자</title>
+  <title>🎮 보드게임 플랫폼</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { overflow-x: hidden; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{overflow-x:hidden;height:100%;}
+    body{
+      background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+      min-height:100vh;
+      font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+      color:#fff;user-select:none;
+    }
+    .screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
 
-    body {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      min-height: 100vh;
-      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-      color: #fff;
-      user-select: none;
+    /* ── GAME SELECT ─────────────────────────────────────── */
+    #s-select h1{font-size:clamp(1.8rem,5vw,3rem);color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.6);letter-spacing:.1em;margin-bottom:6px;text-align:center;}
+    #s-select .sub{color:#7a9cc0;font-size:.9rem;margin-bottom:48px;text-align:center;}
+    .game-cards{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:700px;}
+    .game-card{
+      background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);
+      border-radius:20px;padding:36px 32px;cursor:pointer;width:220px;text-align:center;
+      transition:transform .2s,box-shadow .2s,border-color .2s;
     }
+    .game-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(0,0,0,.4);border-color:rgba(255,255,255,.3);}
+    .game-card .gc-icon{font-size:3.5rem;margin-bottom:14px;display:block;}
+    .game-card .gc-name{font-size:1.3rem;font-weight:700;margin-bottom:8px;color:#f0f0f0;}
+    .game-card .gc-desc{font-size:.8rem;color:#7a9cc0;line-height:1.5;}
+    .game-card.bang-card{border-color:rgba(239,68,68,.35);}
+    .game-card.bang-card:hover{border-color:rgba(239,68,68,.7);box-shadow:0 16px 40px rgba(239,68,68,.2);}
+    .game-card.horse-card{border-color:rgba(59,130,246,.35);}
+    .game-card.horse-card:hover{border-color:rgba(59,130,246,.7);box-shadow:0 16px 40px rgba(59,130,246,.2);}
 
-    .screen {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    /* ── SHARED ─────────────────────────────────────────── */
+    .name-input{width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;outline:none;transition:border-color .2s;}
+    .name-input::placeholder{color:#6a8aaa;}
+    .name-input:focus{border-color:#38bdf8;}
+    .mbtn{width:100%;padding:14px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:transform .1s,box-shadow .1s;letter-spacing:.04em;}
+    .mbtn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3);}
+    .mbtn:active{transform:none;}
+    .mbtn-primary{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;}
+    .mbtn-red{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;}
+    .mbtn-ghost{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#e2e8f0;}
+    .mbtn-ghost:hover{background:rgba(255,255,255,.16);}
+    .btn-back{background:none;border:1.5px solid rgba(255,255,255,.2);color:#aaa;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:.88rem;transition:all .15s;}
+    .btn-back:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .menu-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:36px 44px;display:flex;flex-direction:column;gap:16px;min-width:300px;max-width:400px;width:90vw;}
+    .menu-divider{display:flex;align-items:center;gap:12px;color:#4a6a8a;font-size:.82rem;}
+    .menu-divider::before,.menu-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1);}
 
-    /* ── Menu ────────────────────────────────────────────── */
-    #s-menu h1 {
-      font-size: clamp(2rem, 6vw, 3.2rem);
-      color: #ffd700;
-      text-shadow: 0 0 30px rgba(255,215,0,.6);
-      letter-spacing: .18em;
-      margin-bottom: 6px;
-    }
-    #s-menu .sub {
-      color: #7a9cc0; font-size: .9rem; margin-bottom: 36px;
-    }
-    .menu-box {
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 20px;
-      padding: 36px 44px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-width: 300px;
-      max-width: 400px;
-      width: 90vw;
-    }
-    .name-input {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1.5px solid rgba(255,255,255,.2);
-      background: rgba(255,255,255,.08);
-      color: #fff;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color .2s;
-    }
-    .name-input::placeholder { color: #6a8aaa; }
-    .name-input:focus { border-color: #38bdf8; }
-    .name-hint { font-size:.78rem; color:#5a7a9a; text-align:center; margin-top:-8px; }
+    /* ── 말달리자 MENU / WAIT ─────────────────────────────── */
+    #s-menu h1{font-size:clamp(2rem,6vw,3.2rem);color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.6);letter-spacing:.18em;margin-bottom:6px;}
+    #s-menu .sub{color:#7a9cc0;font-size:.9rem;margin-bottom:36px;}
+    .mbtn-online{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;}
+    .mbtn-local{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#e2e8f0;}
+    .mbtn-local:hover{background:rgba(255,255,255,.16);}
+    #s-wait{gap:20px;}
+    .spinner{width:60px;height:60px;border:4px solid rgba(255,255,255,.15);border-top-color:#38bdf8;border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    #s-wait h2{font-size:1.4rem;color:#e2e8f0;}
+    .wait-sub{color:#7a9cc0;font-size:.9rem;}
+    .btn-sm{padding:10px 28px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;background:transparent;color:#aaa;font-size:.9rem;cursor:pointer;transition:all .15s;}
+    .btn-sm:hover{background:rgba(255,255,255,.08);color:#fff;}
 
-    .menu-divider {
-      display: flex; align-items: center; gap: 12px; color: #4a6a8a; font-size:.82rem;
-    }
-    .menu-divider::before, .menu-divider::after {
-      content:''; flex:1; height:1px; background:rgba(255,255,255,.1);
-    }
+    /* ── 말달리자 GAME ────────────────────────────────────── */
+    #s-game{padding:14px 10px 30px;gap:12px;justify-content:flex-start;}
+    .online-header{background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.3);border-radius:30px;padding:7px 20px;font-size:.82rem;color:#7dd3fc;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .timer-bar{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:6px 16px;font-size:.82rem;color:#94a3b8;display:flex;align-items:center;gap:8px;}
+    #timer-fill{height:6px;border-radius:4px;background:linear-gradient(90deg,#22c55e,#eab308);transition:width .9s linear,background .3s;}
+    #timer-wrap{flex:1;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;height:6px;}
+    .status-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+    .badge{padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:700;}
+    .badge-you{background:rgba(14,165,233,.25);color:#7dd3fc;border:1px solid rgba(14,165,233,.4);}
+    .badge-opp{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.35);}
+    .badge-turn{background:rgba(234,179,8,.2);color:#fde047;border:1px solid rgba(234,179,8,.35);}
+    #board-wrap{overflow:auto;max-width:100%;border-radius:16px;}
+    #board{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px;min-width:340px;}
+    .lbl{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#5a7a9a;font-weight:600;}
+    .cell{width:28px;height:28px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .15s;border:1.5px solid transparent;position:relative;}
+    .cell-desert{background:rgba(194,154,108,.18);}
+    .cell-grass{background:rgba(34,197,94,.14);}
+    .cell-oasis{background:radial-gradient(circle,rgba(56,189,248,.35),rgba(14,165,233,.1));border:1.5px solid rgba(56,189,248,.5)!important;}
+    .cell:hover:not(.cell-empty-hover){filter:brightness(1.3);}
+    .cell-selected{border-color:#ffd700!important;box-shadow:0 0 8px rgba(255,215,0,.5);}
+    .cell-move{background:rgba(56,189,248,.3)!important;border-color:#38bdf8!important;}
+    .cell-jump{background:rgba(168,85,247,.3)!important;border-color:#a855f7!important;}
+    .piece-b{filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));}
+    .piece-w{filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));}
+    #win-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+    #win-overlay h2{font-size:2.2rem;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.6);}
+    #win-overlay p{color:#cbd5e1;font-size:1rem;}
+    #win-overlay button{padding:14px 44px;background:linear-gradient(135deg,#ffd700,#f97316);border:none;border-radius:12px;color:#111;font-size:1rem;font-weight:700;cursor:pointer;}
 
-    .mbtn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .1s, box-shadow .1s, filter .1s;
-      letter-spacing: .04em;
-    }
-    .mbtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.3); }
-    .mbtn:active { transform: none; }
-    .mbtn-online {
-      background: linear-gradient(135deg, #0ea5e9, #6366f1);
-      color: #fff;
-    }
-    .mbtn-local {
-      background: rgba(255,255,255,.1);
-      border: 1.5px solid rgba(255,255,255,.2);
-      color: #e2e8f0;
-    }
-    .mbtn-local:hover { background: rgba(255,255,255,.16); }
+    /* ── BANG! LOBBY ─────────────────────────────────────── */
+    #s-bang-lobby{gap:24px;}
+    #s-bang-lobby h2{font-size:1.8rem;color:#ffd700;text-align:center;}
+    .lobby-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px;width:min(440px,90vw);}
+    .lobby-players{display:flex;flex-direction:column;gap:8px;min-height:80px;margin-bottom:16px;}
+    .lobby-player{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.07);border-radius:8px;font-size:.9rem;}
+    .lobby-player .lp-num{color:#7a9cc0;font-size:.78rem;width:18px;}
+    .lobby-player .lp-host{font-size:.7rem;background:rgba(234,179,8,.25);color:#fde047;border-radius:4px;padding:1px 6px;margin-left:auto;}
+    .lobby-count{text-align:center;color:#7a9cc0;font-size:.85rem;margin-bottom:12px;}
 
-    /* ── Wait ────────────────────────────────────────────── */
-    #s-wait { gap: 20px; }
-    .spinner {
-      width: 60px; height: 60px;
-      border: 4px solid rgba(255,255,255,.15);
-      border-top-color: #38bdf8;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+    /* ── BANG! GAME ──────────────────────────────────────── */
+    #s-bang-game{
+      padding:8px;gap:8px;justify-content:flex-start;align-items:stretch;
+      min-height:100vh;max-width:1200px;margin:0 auto;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #s-wait h2 { font-size: 1.4rem; color: #e2e8f0; }
-    #s-wait .wait-sub { color: #7a9cc0; font-size: .9rem; }
-    .btn-sm {
-      padding: 10px 28px;
-      border: 1.5px solid rgba(255,255,255,.25);
-      border-radius: 9px;
-      background: transparent;
-      color: #aaa;
-      font-size: .9rem;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .btn-sm:hover { background: rgba(255,255,255,.08); color: #fff; }
+    /* Top bar */
+    .bg-topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0;}
+    .bg-phase-badge{padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:700;background:rgba(234,179,8,.2);color:#fde047;border:1px solid rgba(234,179,8,.35);}
 
-    /* ── Game ────────────────────────────────────────────── */
-    #s-game {
-      padding: 14px 10px 30px;
-      gap: 12px;
-      justify-content: flex-start;
+    /* Players area */
+    .bg-players{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+    .bg-player{
+      background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
+      border-radius:12px;padding:10px 12px;min-width:130px;max-width:170px;flex:1;
+      transition:border-color .2s,box-shadow .2s;
+      cursor:default;
     }
+    .bg-player.is-turn{border-color:#ffd700;box-shadow:0 0 12px rgba(255,215,0,.3);}
+    .bg-player.is-dead{opacity:.4;border-color:rgba(255,255,255,.06);}
+    .bg-player.is-me{border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.06);}
+    .bg-player.pending-action{border-color:#ef4444;box-shadow:0 0 12px rgba(239,68,68,.5);animation:pulse-red .8s infinite alternate;}
+    .bg-player.is-target{border-color:#f97316;cursor:pointer;}
+    .bg-player.is-target:hover{box-shadow:0 0 12px rgba(249,115,22,.5);}
+    @keyframes pulse-red{from{box-shadow:0 0 8px rgba(239,68,68,.3);}to{box-shadow:0 0 18px rgba(239,68,68,.7);}}
+    .bg-player .pname{font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bg-player .prole{font-size:.7rem;padding:1px 7px;border-radius:4px;display:inline-block;margin-top:3px;font-weight:600;}
+    .role-sheriff{background:rgba(234,179,8,.3);color:#fde047;}
+    .role-deputy{background:rgba(59,130,246,.3);color:#93c5fd;}
+    .role-outlaw{background:rgba(239,68,68,.3);color:#fca5a5;}
+    .role-renegade{background:rgba(168,85,247,.3);color:#d8b4fe;}
+    .role-hidden{background:rgba(255,255,255,.1);color:#9ca3af;}
+    .bg-player .php{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
+    .hp-heart{font-size:.85rem;}
+    .hp-empty{font-size:.85rem;opacity:.25;}
+    .bg-player .pequip{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+    .equip-tag{font-size:.65rem;padding:1px 5px;border-radius:4px;background:rgba(59,130,246,.25);color:#93c5fd;border:1px solid rgba(59,130,246,.3);}
+    .bg-player .phand-count{font-size:.75rem;color:#7a9cc0;margin-top:4px;}
 
-    .online-header {
-      background: rgba(14,165,233,.12);
-      border: 1px solid rgba(14,165,233,.3);
-      border-radius: 30px;
-      padding: 7px 20px;
-      font-size: .82rem;
-      color: #7dd3fc;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .oh-sep { color: #4a7a9a; }
+    /* Middle area */
+    .bg-middle{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+    /* Deck + Discard */
+    .bg-deck-area{display:flex;gap:12px;align-items:center;flex-shrink:0;}
+    .bg-deck{width:62px;height:88px;border-radius:8px;background:linear-gradient(135deg,#1e3a5f,#0f2d4e);border:2px solid rgba(59,130,246,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.7rem;color:#93c5fd;gap:4px;}
+    .bg-discard{width:62px;height:88px;border-radius:8px;border:2px solid rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.6rem;color:#9ca3af;gap:3px;overflow:hidden;}
 
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 50px;
-      padding: 10px 22px;
-    }
-    .turn-info { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; }
-    .chip {
-      width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid;
-      display: flex; align-items: center; justify-content: center; font-size: 14px;
-    }
-    .chip.black { background: #111; border-color: #777; color: #bbb; }
-    .chip.white { background: #eee; border-color: #aaa; color: #555; }
-    .timer-wrap { display: flex; align-items: center; gap: 8px; }
-    .timer-track { width: 90px; height: 7px; background: rgba(255,255,255,.15); border-radius: 4px; overflow: hidden; }
-    .timer-fill { height: 100%; background: #38bdf8; border-radius: 4px; transition: width 1s linear, background .3s; }
-    .timer-fill.red { background: #f87171; }
-    .timer-num { font-size: 1.25rem; font-weight: 700; color: #38bdf8; min-width: 44px; transition: color .3s; }
-    .timer-num.red { color: #f87171; animation: blink .5s ease infinite alternate; }
-    @keyframes blink { to { opacity: .2; } }
+    /* Game log */
+    .bg-log{flex:1;min-width:200px;max-height:160px;overflow-y:auto;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;font-size:.75rem;color:#9ca3af;line-height:1.6;}
+    .bg-log p{border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:2px;margin-bottom:2px;}
+    .bg-log p:last-child{border:none;}
 
-    /* ── Board (fluid) ───────────────────────────────────── */
-    /*
-      Total board width = lbl(18px) + 11*cell + 12*gap(2px) + 2*pad(2px) + border(6px)
-                        = 52px + 11*cell
-      Available         = 100vw - 20px (screen padding)
-      → cell = (100vw - 72px) / 11
-    */
-    :root {
-      --cell: clamp(22px, calc((100vw - 72px) / 11), 46px);
-      --lbl:  18px;
-      --gap:  2px;
-    }
-    .board-outer {
-      display: grid;
-      grid-template-columns: var(--lbl) repeat(11, var(--cell));
-      grid-template-rows:    var(--lbl) repeat(11, var(--cell));
-      gap: var(--gap);
-      background: #5c4422;
-      padding: var(--gap);
-      border: 3px solid #7a5c30;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.5);
-    }
-    .lbl {
-      display: flex; align-items: center; justify-content: center;
-      font-size: clamp(8px, 2.5vw, 11px); font-weight: 700; color: #c8a060;
-    }
-    .cell {
-      width: var(--cell); height: var(--cell);
-      border-radius: clamp(2px, 0.6vw, 4px);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; position: relative;
-      transition: filter .12s;
-    }
-    .cell:hover { filter: brightness(1.2); }
-    .cell.desert { background: #c89a48; }
-    .cell.grass  { background: #4a9440; }
-    .cell.oasis  {
-      background: radial-gradient(circle, #3dbf8a 0%, #1c7d58 55%, #0e5e40 100%);
-      box-shadow: inset 0 0 12px rgba(61,191,138,.45);
-    }
-    .cell.vs  { outline: 2px solid #22d3ee; outline-offset: -2px; animation: vp .85s ease-in-out infinite alternate; }
-    .cell.vk  { outline: 2px solid #c084fc; outline-offset: -2px; animation: vp .85s ease-in-out infinite alternate; }
-    .cell.sel { outline: 2px solid #f97316; outline-offset: -2px; }
-    @keyframes vp { to { filter: brightness(1.3); } }
-    .oasis-mark {
-      position: absolute;
-      font-size: calc(var(--cell) * 0.5);
-      opacity: .65; pointer-events: none;
-    }
-    .cell.not-my-turn { cursor: default; }
-    .piece {
-      width: calc(var(--cell) * 0.8); height: calc(var(--cell) * 0.8);
-      border-radius: 50%; border: clamp(2px, 0.5vw, 3px) solid;
-      display: flex; align-items: center; justify-content: center;
-      font-size: calc(var(--cell) * 0.43);
-      pointer-events: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.2);
-      transition: transform .1s;
-    }
-    .cell:hover .piece, .cell.sel .piece { transform: scale(1.1); }
-    .piece.black { background: radial-gradient(circle at 34% 34%, #666, #111); border-color: #888; color: #ccc; }
-    .piece.white { background: radial-gradient(circle at 34% 34%, #fff, #ccc); border-color: #aaa; color: #666; }
+    /* Pending action banner */
+    .bg-pending{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:10px;padding:10px 16px;text-align:center;font-size:.88rem;color:#fca5a5;}
 
-    /* ── Legend + bottom bar ─────────────────────────────── */
-    .bottom-bar { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center; }
-    .legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-    .lg { display: flex; align-items: center; gap: 5px; font-size: .74rem; color: #9ab; }
-    .lg-box { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-    .btn-back {
-      padding: 7px 18px; border: 1px solid rgba(255,255,255,.2); border-radius: 8px;
-      background: transparent; color: #8aa; font-size: .82rem; cursor: pointer;
-      transition: all .15s;
-    }
-    .btn-back:hover { background: rgba(255,255,255,.08); color: #fff; }
+    /* My hand */
+    .bg-hand-area{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;}
+    .bg-hand-title{font-size:.8rem;color:#7a9cc0;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .bg-hand-cards{display:flex;gap:8px;flex-wrap:wrap;}
 
-    /* ── Dialogs ─────────────────────────────────────────── */
-    .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.7);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 80;
-      backdrop-filter: blur(5px);
+    /* Cards */
+    .bg-card{
+      width:70px;height:100px;border-radius:8px;border:2px solid transparent;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;
+      padding:4px;font-size:.68rem;text-align:center;gap:2px;position:relative;
+      background:rgba(255,255,255,.08);
     }
-    .dlg {
-      background: linear-gradient(140deg, #1e2e4c, #2a1e4c);
-      border: 2px solid #ffd700;
-      border-radius: 18px;
-      padding: 32px 44px;
-      text-align: center;
-      box-shadow: 0 0 48px rgba(255,215,0,.2), 0 24px 48px rgba(0,0,0,.5);
-      max-width: 90vw;
-    }
-    .dlg h3 { font-size: 1.2rem; margin-bottom: 8px; }
-    .dlg p  { color: #aac; margin-bottom: 22px; line-height: 1.6; font-size: .95rem; }
-    .dlg p b { color: #fff; }
-    .btn-row { display: flex; gap: 12px; justify-content: center; }
-    .btn {
-      padding: 10px 28px; border: none; border-radius: 9px;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
-      transition: transform .1s, box-shadow .1s;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
-    .btn:active { transform: none; }
-    .btn-yes { background: #22c55e; color: #fff; }
-    .btn-no  { background: #ef4444; color: #fff; }
-    .btn-rst { background: linear-gradient(135deg, #ffd700, #f97316); color: #111; margin-top: 4px; }
-    .win-dlg { animation: pop .42s cubic-bezier(.175,.885,.32,1.275); }
-    @keyframes pop { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
-    .win-dlg h2 { font-size: 2rem; color: #ffd700; text-shadow: 0 0 24px rgba(255,215,0,.7); margin-bottom: 10px; }
+    .bg-card:hover{transform:translateY(-6px);box-shadow:0 8px 20px rgba(0,0,0,.5);}
+    .bg-card.selected{border-color:#ffd700!important;box-shadow:0 0 14px rgba(255,215,0,.5);transform:translateY(-8px);}
+    .bg-card.disabled{opacity:.4;cursor:not-allowed;}
+    .bg-card.disabled:hover{transform:none;}
+    .bg-card .card-suit{position:absolute;top:3px;left:5px;font-size:.65rem;opacity:.6;}
+    .bg-card .card-val{position:absolute;bottom:3px;right:5px;font-size:.65rem;opacity:.6;}
+    .bg-card .card-icon{font-size:1.3rem;}
+    .bg-card .card-name{font-size:.6rem;font-weight:700;line-height:1.2;}
+    /* Card type colors */
+    .ct-bang{background:rgba(127,29,29,.5);border-color:rgba(239,68,68,.3);}
+    .ct-missed{background:rgba(30,30,40,.5);border-color:rgba(107,114,128,.3);}
+    .ct-beer{background:rgba(20,60,20,.5);border-color:rgba(34,197,94,.3);}
+    .ct-draw{background:rgba(60,50,10,.5);border-color:rgba(234,179,8,.3);}
+    .ct-area{background:rgba(80,30,10,.5);border-color:rgba(249,115,22,.3);}
+    .ct-duel{background:rgba(60,10,80,.5);border-color:rgba(168,85,247,.3);}
+    .ct-saloon{background:rgba(10,60,60,.5);border-color:rgba(20,184,166,.3);}
+    .ct-equip{background:rgba(10,30,80,.5);border-color:rgba(59,130,246,.3);}
+    .ct-weapon{background:rgba(10,20,70,.5);border-color:rgba(29,78,216,.4);}
 
-    /* ── Manual ──────────────────────────────────────────── */
-    .mbtn-manual {
-      background: transparent;
-      border: 1.5px solid rgba(255,215,0,.35);
-      color: #c8a060;
-      font-size: .92rem;
-    }
-    .mbtn-manual:hover { background: rgba(255,215,0,.08); color: #ffd700; }
+    /* Action buttons */
+    .bg-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .bg-btn{padding:9px 18px;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;}
+    .bg-btn:hover{filter:brightness(1.15);}
+    .bg-btn-end{background:rgba(234,179,8,.25);color:#fde047;border:1px solid rgba(234,179,8,.4);}
+    .bg-btn-pass{background:rgba(107,114,128,.25);color:#d1d5db;border:1px solid rgba(107,114,128,.35);}
+    .bg-btn-damage{background:rgba(239,68,68,.25);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}
+    .bg-err{color:#fca5a5;font-size:.8rem;}
 
-    .manual-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.82);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 90;
-      backdrop-filter: blur(6px);
-      padding: 16px;
+    /* Role reveal overlay */
+    .bg-role-reveal{
+      position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
     }
-    .manual-box {
-      background: linear-gradient(150deg, #1a2640, #1e1a3a);
-      border: 2px solid rgba(255,215,0,.4);
-      border-radius: 20px;
-      width: 100%; max-width: 520px;
-      max-height: 88vh;
-      overflow-y: auto;
-      padding: 28px 28px 24px;
-      display: flex; flex-direction: column; gap: 18px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,215,0,.3) transparent;
-    }
-    .manual-box::-webkit-scrollbar { width: 5px; }
-    .manual-box::-webkit-scrollbar-thumb { background: rgba(255,215,0,.3); border-radius: 3px; }
-    .manual-title {
-      text-align: center;
-      font-size: 1.35rem; font-weight: 700;
-      color: #ffd700;
-      text-shadow: 0 0 18px rgba(255,215,0,.5);
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255,215,0,.2);
-    }
-    .man-section { display: flex; flex-direction: column; gap: 7px; }
-    .man-h {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 1rem; font-weight: 700; color: #7dd3fc;
-    }
-    .man-h .icon { font-size: 1.1rem; }
-    .man-body { color: #c8d8ea; font-size: .88rem; line-height: 1.7; padding-left: 4px; }
-    .man-body b { color: #fff; }
-    .man-body .tag {
-      display: inline-block;
-      padding: 1px 8px; border-radius: 20px;
-      font-size: .78rem; font-weight: 700;
-      vertical-align: middle; margin: 0 2px;
-    }
-    .tag-slide { background: rgba(34,211,238,.2); color: #22d3ee; border: 1px solid rgba(34,211,238,.4); }
-    .tag-knight { background: rgba(192,132,252,.2); color: #c084fc; border: 1px solid rgba(192,132,252,.4); }
-    .tag-oasis { background: rgba(61,191,138,.2); color: #3dbf8a; border: 1px solid rgba(61,191,138,.4); }
-    .tag-grass { background: rgba(74,148,64,.2); color: #6dbf60; border: 1px solid rgba(74,148,64,.4); }
-    .tag-desert { background: rgba(200,154,72,.2); color: #c89a48; border: 1px solid rgba(200,154,72,.4); }
-    .man-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .man-card {
-      flex: 1; min-width: 120px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 10px;
-      padding: 10px 12px;
-    }
-    .man-card .card-title { font-size: .8rem; color: #7dd3fc; font-weight: 700; margin-bottom: 4px; }
-    .man-card .card-body  { font-size: .82rem; color: #b0c8e0; line-height: 1.55; }
-    .man-divider { height: 1px; background: rgba(255,255,255,.08); }
-    .btn-manual-close {
-      align-self: center;
-      padding: 10px 36px;
-      background: linear-gradient(135deg, #ffd700, #f97316);
-      color: #111; border: none; border-radius: 10px;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
-      transition: transform .1s;
-      margin-top: 4px;
-    }
-    .btn-manual-close:hover { transform: translateY(-2px); }
+    .role-card-big{background:rgba(255,255,255,.1);border:2px solid rgba(255,215,0,.5);border-radius:20px;padding:40px 60px;text-align:center;}
+    .role-card-big .ricon{font-size:4rem;margin-bottom:12px;}
+    .role-card-big .rname{font-size:2rem;font-weight:700;color:#ffd700;}
+    .role-card-big .rdesc{color:#9ca3af;font-size:.95rem;margin-top:8px;max-width:260px;line-height:1.5;}
 
-    @media (max-width: 480px) {
-      .status { gap: 10px; padding: 8px 14px; }
-      .timer-track { width: 64px; }
-      .timer-num { font-size: 1rem; }
-      .turn-info { font-size: .9rem; }
-      .dlg { padding: 24px 18px; }
-      #s-game { padding: 10px 6px 20px; }
+    /* Game over overlay */
+    #bg-gameover{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:18px;}
+    #bg-gameover h2{font-size:2.5rem;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.5);}
+
+    /* Scrollbar */
+    .bg-log::-webkit-scrollbar{width:4px;}
+    .bg-log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px;}
+
+    @media(max-width:600px){
+      .bg-card{width:60px;height:88px;}
+      .bg-player{min-width:110px;padding:8px;}
+      .bg-middle{flex-direction:column;}
     }
   </style>
 </head>
 <body>
 
-<!-- ── Menu Screen ─────────────────────────────────────── -->
-<div class="screen" id="s-menu">
-  <h1>🐎 말달리자</h1>
-  <p class="sub">오아시스에 먼저 도달하는 플레이어가 승리</p>
-  <div class="menu-box">
-    <input class="name-input" id="ni" type="text" placeholder="닉네임 입력" maxlength="14">
-    <p class="name-hint">온라인 매칭 시 사용됩니다</p>
-    <button class="mbtn mbtn-online" id="btn-online">🌐 온라인 매칭하기</button>
-    <div class="menu-divider">또는</div>
-    <button class="mbtn mbtn-local" id="btn-local">👥 같이하기 (같은 화면)</button>
-    <button class="mbtn mbtn-manual" id="btn-manual">📖 게임 설명서</button>
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 게임 선택
+════════════════════════════════════════════════════════ -->
+<div class="screen" id="s-select">
+  <h1>🎮 보드게임 플랫폼</h1>
+  <p class="sub">플레이할 게임을 선택하세요</p>
+  <div class="game-cards">
+    <div class="game-card horse-card" onclick="selectGame('horse')">
+      <span class="gc-icon">🐎</span>
+      <div class="gc-name">말달리자</div>
+      <div class="gc-desc">1vs1 전략 보드게임<br>오아시스를 먼저 점령하라!</div>
+    </div>
+    <div class="game-card bang-card" onclick="selectGame('bang')">
+      <span class="gc-icon">🤠</span>
+      <div class="gc-name">뱅! (Bang!)</div>
+      <div class="gc-desc">4~8인 역할 숨기기 카드게임<br>보안관을 지켜라 / 처치하라!</div>
+    </div>
   </div>
 </div>
 
-<!-- ── Wait Screen ─────────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 말달리자 메뉴
+════════════════════════════════════════════════════════ -->
+<div class="screen" id="s-menu" style="display:none">
+  <h1>🐎 말달리자</h1>
+  <p class="sub">오아시스를 먼저 점령하는 자가 승리</p>
+  <div class="menu-box">
+    <input class="name-input" id="name-input" placeholder="닉네임 입력" maxlength="14">
+    <button class="mbtn mbtn-online" onclick="goOnline()">🌐 온라인 대전</button>
+    <div class="menu-divider">또는</div>
+    <button class="mbtn mbtn-local mbtn-ghost" onclick="goLocal()">👥 로컬 대전 (같은 기기)</button>
+    <button class="btn-back" onclick="show('s-select')" style="margin-top:4px;">← 게임 선택</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 말달리자 대기
+════════════════════════════════════════════════════════ -->
 <div class="screen" id="s-wait" style="display:none">
   <div class="spinner"></div>
-  <h2>상대방을 찾는 중...</h2>
-  <p class="wait-sub" id="wait-sub"></p>
-  <button class="btn-sm" id="btn-cancel">취소</button>
+  <h2>상대방 찾는 중...</h2>
+  <p class="wait-sub">잠시만 기다려 주세요</p>
+  <button class="btn-sm" onclick="cancelWait()">취소</button>
 </div>
 
-<!-- ── Game Screen ─────────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 말달리자 게임판
+════════════════════════════════════════════════════════ -->
 <div class="screen" id="s-game" style="display:none">
-  <div class="online-header" id="online-hdr" style="display:none"></div>
-
-  <div class="status">
-    <div class="turn-info">
-      <div class="chip black" id="turn-chip">♞</div>
-      <span id="turn-text">흑의 차례</span>
-    </div>
-    <div class="timer-wrap">
-      <div class="timer-track"><div class="timer-fill" id="tfill" style="width:100%"></div></div>
-      <div class="timer-num" id="tnum">1:00</div>
-    </div>
+  <div class="online-header" id="online-hdr" style="display:none">
+    <span>🌐 온라인</span>
+    <span id="opp-name-lbl"></span>
   </div>
-
-  <div class="board-outer" id="board"></div>
-
-  <div class="bottom-bar">
-    <div class="legend">
-      <div class="lg"><div class="lg-box" style="background:#c89a48"></div>사막</div>
-      <div class="lg"><div class="lg-box" style="background:#4a9440"></div>초원</div>
-      <div class="lg"><div class="lg-box" style="background:#1c7d58"></div>오아시스</div>
-      <div class="lg"><div class="lg-box" style="border:2px solid #22d3ee;background:rgba(34,211,238,.1)"></div>슬라이드</div>
-      <div class="lg"><div class="lg-box" style="border:2px solid #c084fc;background:rgba(192,132,252,.1)"></div>L자</div>
-    </div>
-    <button class="btn-back" id="btn-back">← 메뉴</button>
+  <div class="timer-bar" id="timer-bar" style="display:none">
+    <span>⏱</span>
+    <div id="timer-wrap"><div id="timer-fill" style="width:100%"></div></div>
+    <span id="timer-num">60</span>
   </div>
-</div>
-
-<!-- ── Manual Dialog ──────────────────────────────────── -->
-<div class="manual-overlay" id="d-manual" style="display:none">
-  <div class="manual-box">
-    <div class="manual-title">📖 말달리자 게임 설명서</div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">🎯</span> 목표</div>
-      <div class="man-body">
-        게임판 중앙의 <b>오아시스</b> <span class="tag tag-oasis">🌴 f6</span>에
-        자신의 말을 <b>먼저 이동시키는 플레이어</b>가 승리합니다.
-      </div>
-    </div>
-
-    <div class="man-divider"></div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">🗺️</span> 게임판</div>
-      <div class="man-body">11×11 칸으로 이루어진 보드이며, 세 종류의 지형이 있습니다.</div>
-      <div class="man-row">
-        <div class="man-card">
-          <div class="card-title">🟤 사막</div>
-          <div class="card-body">일반 칸. 슬라이드·L자 이동 모두 가능합니다.</div>
-        </div>
-        <div class="man-card">
-          <div class="card-title">🟢 초원</div>
-          <div class="card-body">오아시스 주변 12칸. 슬라이드 이동은 가능하지만 <b>L자 이동으로는 도착할 수 없습니다.</b></div>
-        </div>
-        <div class="man-card">
-          <div class="card-title">🌴 오아시스</div>
-          <div class="card-body">정중앙 f6 칸. 이 칸에 먼저 도달하면 <b>즉시 승리</b>!</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="man-divider"></div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">♟️</span> 말 배치</div>
-      <div class="man-body">
-        각 플레이어는 말 <b>10개</b>로 시작하며 대각선 방향으로 배치됩니다.
-      </div>
-      <div class="man-row">
-        <div class="man-card">
-          <div class="card-title">♞ 흑</div>
-          <div class="card-body">좌상단 코너 (a1~c1, a2, a3)<br>우하단 코너 (i11, j11, k9~k11)</div>
-        </div>
-        <div class="man-card">
-          <div class="card-title">♘ 백</div>
-          <div class="card-body">우상단 코너 (i1, j1, k1~k3)<br>좌하단 코너 (a9~a11, b11, c11)</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="man-divider"></div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">🏃</span> 이동 방법</div>
-      <div class="man-row">
-        <div class="man-card">
-          <div class="card-title"><span class="tag tag-slide">슬라이드</span></div>
-          <div class="card-body">
-            상하좌우 한 방향으로 다른 말이나 게임판 끝에 <b>닿을 때까지 끝까지</b> 이동합니다.<br>
-            중간에 멈출 수 없습니다.
-          </div>
-        </div>
-        <div class="man-card">
-          <div class="card-title"><span class="tag tag-knight">L자 이동</span></div>
-          <div class="card-body">
-            체스의 나이트처럼 <b>(2칸+1칸)</b> 방향으로 이동합니다.<br>
-            빈 <b>사막 칸</b>으로만 도착 가능합니다.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="man-divider"></div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">⏱️</span> 타이머</div>
-      <div class="man-body">
-        한 턴당 <b>1분</b>의 제한 시간이 있습니다. 시간이 초과되면 자동으로 상대방의 턴으로 넘어갑니다.
-      </div>
-    </div>
-
-    <div class="man-divider"></div>
-
-    <div class="man-section">
-      <div class="man-h"><span class="icon">💡</span> 이동 선택 방법</div>
-      <div class="man-body">
-        이동할 말을 <b>한 번 클릭</b>하면 이동 가능한 칸이 강조됩니다.<br>
-        <span class="tag tag-slide">슬라이드</span> 가능한 칸은 <b style="color:#22d3ee">청록색</b>,
-        <span class="tag tag-knight">L자</span> 가능한 칸은 <b style="color:#c084fc">보라색</b>으로 표시됩니다.<br>
-        강조된 칸을 클릭하면 즉시 이동합니다.
-      </div>
-    </div>
-
-    <button class="btn-manual-close" id="btn-manual-close">확인</button>
+  <div class="status-row" id="status-row">
+    <span class="badge badge-you" id="badge-you">흑</span>
+    <span class="badge badge-turn" id="badge-turn">흑 차례</span>
+    <span class="badge badge-opp" id="badge-opp">백</span>
   </div>
-</div>
-
-<!-- ── Win Dialog ─────────────────────────────────────── -->
-<div class="overlay" id="d-win" style="display:none">
-  <div class="dlg win-dlg">
+  <div id="board-wrap"><div id="board"></div></div>
+  <div id="win-overlay">
     <h2 id="win-title"></h2>
-    <p id="win-desc">오아시스에 먼저 도달했습니다! 🌴</p>
-    <button class="btn btn-rst" id="btn-rst">← 메뉴로</button>
+    <p id="win-desc"></p>
+    <button onclick="location.reload()">메뉴로 돌아가기</button>
   </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 뱅! 로비
+════════════════════════════════════════════════════════ -->
+<div class="screen" id="s-bang-lobby" style="display:none">
+  <h2>🤠 뱅! 로비</h2>
+  <div class="lobby-box">
+    <input class="name-input" id="bang-name-input" placeholder="닉네임 입력" maxlength="14" style="margin-bottom:4px;">
+    <button class="mbtn mbtn-red" onclick="bangJoin()" style="margin-bottom:16px;">로비 입장</button>
+    <div class="lobby-players" id="bang-lobby-players">
+      <div style="color:#4a6a8a;font-size:.85rem;text-align:center;padding:20px 0;">로비에 입장하면 다른 플레이어가 보입니다</div>
+    </div>
+    <div class="lobby-count" id="bang-lobby-count">0 / 8명</div>
+    <button class="mbtn mbtn-red" id="bang-start-btn" onclick="bangHostStart()" style="display:none;">🎮 게임 시작 (최소 4명)</button>
+    <button class="btn-back" onclick="bangLeaveLobby()" style="margin-top:8px;">← 게임 선택</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN: 뱅! 게임
+════════════════════════════════════════════════════════ -->
+<div id="s-bang-game" style="display:none;padding:10px;max-width:1100px;margin:0 auto;">
+
+  <!-- Top bar -->
+  <div class="bg-topbar">
+    <span style="font-size:1.1rem;font-weight:700;">🤠 뱅!</span>
+    <span class="bg-phase-badge" id="bg-phase">대기 중</span>
+    <span id="bg-turn-name" style="font-size:.85rem;color:#fde047;"></span>
+    <span id="bg-err" class="bg-err"></span>
+  </div>
+
+  <!-- Players -->
+  <div class="bg-players" id="bg-players"></div>
+
+  <!-- Middle: deck/discard + log -->
+  <div class="bg-middle">
+    <div class="bg-deck-area">
+      <div class="bg-deck" id="bg-deck">
+        <span style="font-size:1.5rem">🂠</span>
+        <span id="bg-deck-count">—</span>
+        <span>덱</span>
+      </div>
+      <div class="bg-discard" id="bg-discard">
+        <span id="bg-discard-icon" style="font-size:1.4rem">🃟</span>
+        <span id="bg-discard-info" style="font-size:.6rem;color:#6b7280">버린 카드</span>
+      </div>
+    </div>
+    <div class="bg-log" id="bg-log"></div>
+  </div>
+
+  <!-- Pending action banner -->
+  <div class="bg-pending" id="bg-pending" style="display:none"></div>
+
+  <!-- My hand -->
+  <div class="bg-hand-area">
+    <div class="bg-hand-title">
+      <span>🃏 내 패</span>
+      <span id="bg-hand-count" style="background:rgba(255,255,255,.1);border-radius:10px;padding:1px 8px;font-size:.75rem;"></span>
+      <span id="bg-selected-info" style="color:#fde047;font-size:.8rem;"></span>
+    </div>
+    <div class="bg-hand-cards" id="bg-hand-cards"></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="bg-actions">
+    <button class="bg-btn bg-btn-end" id="bg-end-turn-btn" onclick="bangEndTurn()" style="display:none;">턴 종료</button>
+    <button class="bg-btn bg-btn-pass" id="bg-pass-btn" onclick="bangRespond(null)" style="display:none;">😵 피해 입기</button>
+    <button class="bg-btn bg-btn-damage" id="bg-take-dmg-btn" onclick="bangRespond(null)" style="display:none;">😵 피해 입기</button>
+    <button class="bg-btn bg-btn-pass" id="bg-duel-pass-btn" onclick="bangRespond(null)" style="display:none;">🏳 항복 (-1HP)</button>
+  </div>
+</div>
+
+<!-- Role reveal overlay -->
+<div class="bg-role-reveal" id="bg-role-reveal" style="display:none">
+  <div class="role-card-big">
+    <div class="ricon" id="reveal-icon"></div>
+    <div class="rname" id="reveal-name"></div>
+    <div class="rdesc" id="reveal-desc"></div>
+  </div>
+  <button class="mbtn mbtn-primary" style="max-width:200px;" onclick="document.getElementById('bg-role-reveal').style.display='none'">확인</button>
+</div>
+
+<!-- Game over overlay -->
+<div id="bg-gameover" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:18px;">
+  <div style="font-size:3.5rem" id="bg-go-icon">🏆</div>
+  <h2 id="bg-go-title" style="font-size:2rem;color:#ffd700;text-align:center;"></h2>
+  <div id="bg-go-roles" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:500px;"></div>
+  <button class="mbtn mbtn-primary" style="max-width:200px;margin-top:8px;" onclick="location.reload()">메뉴로 돌아가기</button>
 </div>
 
 <script>
-  // ── Constants ──────────────────────────────────────────
-  const ALPHA = 'abcdefghijk';
-  const GRASS = new Set(['3,5','4,4','4,5','4,6','5,3','5,4','5,6','5,7','6,4','6,5','6,6','7,5']);
-  const BLACK_START = [[0,0],[0,1],[0,2],[1,0],[2,0],[8,10],[9,10],[10,8],[10,9],[10,10]];
-  const WHITE_START = [[8,0],[9,0],[10,0],[10,1],[10,2],[0,8],[0,9],[0,10],[1,10],[2,10]];
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+const socket = io();
 
-  // ── Shared state ───────────────────────────────────────
-  let mode = null;      // 'local' | 'online'
-  let sock = null;
-  let myColor = null;
-  let roomId = null;
-  let oppName = '';
+function show(id) {
+  ['s-select','s-menu','s-wait','s-game','s-bang-lobby','s-bang-game']
+    .forEach(s => document.getElementById(s).style.display = s===id?'flex':'none');
+  if(id==='s-bang-game') document.getElementById('s-bang-game').style.display='block';
+}
 
-  let grid, turn, done;
-  let sel, vS, vK;
-  let tLeft, tId;
+function selectGame(game) {
+  if(game==='horse') show('s-menu');
+  else if(game==='bang') show('s-bang-lobby');
+}
 
-  // ── Screen management ──────────────────────────────────
-  function show(id) {
-    ['s-menu','s-wait','s-game'].forEach(s =>
-      document.getElementById(s).style.display = (s === id) ? 'flex' : 'none'
-    );
+// ═══════════════════════════════════════════════════════════
+// 말달리자
+// ═══════════════════════════════════════════════════════════
+const GRASS = new Set(['3,5','4,4','4,5','4,6','5,3','5,4','5,6','5,7','6,4','6,5','6,6','7,5']);
+const ALPHA = 'ABCDEFGHIJK';
+let grid=null, myColor=null, turn=null, sel=null, vS=[], vK=[], mode='online', oppName='', roomId='', myName='';
+
+function ctype(c,r){
+  if(c===5&&r===5) return 'oasis';
+  if(GRASS.has(`${c},${r}`)) return 'grass';
+  return 'desert';
+}
+
+function goOnline(){
+  myName=(document.getElementById('name-input').value.trim()||'플레이어').slice(0,14);
+  mode='online'; show('s-wait');
+  socket.emit('join',{name:myName});
+}
+function goLocal(){
+  myName=(document.getElementById('name-input').value.trim()||'플레이어').slice(0,14);
+  mode='local'; myColor='black'; turn='black';
+  const g=Array.from({length:11},()=>Array(11).fill(null));
+  const BS=[[0,0],[0,1],[0,2],[1,0],[2,0],[8,10],[9,10],[10,8],[10,9],[10,10]];
+  const WS=[[8,0],[9,0],[10,0],[10,1],[10,2],[0,8],[0,9],[0,10],[1,10],[2,10]];
+  BS.forEach(([c,r])=>g[c][r]='black'); WS.forEach(([c,r])=>g[c][r]='white');
+  grid=g; show('s-game'); render();
+}
+function cancelWait(){socket.emit('cancel');show('s-menu');}
+
+function getSlides(c,r){
+  const out=[];
+  for(const[dc,dr]of[[0,-1],[0,1],[-1,0],[1,0]]){
+    let nc=c+dc,nr=r+dr,lc=null,lr=null;
+    while(nc>=0&&nc<11&&nr>=0&&nr<11&&!grid[nc][nr]){lc=nc;lr=nr;nc+=dc;nr+=dr;}
+    if(lc!==null) out.push([lc,lr]);
   }
+  return out;
+}
+function getKnights(c,r){
+  return[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]
+    .map(([dc,dr])=>[c+dc,r+dr])
+    .filter(([nc,nr])=>nc>=0&&nc<11&&nr>=0&&nr<11&&!grid[nc][nr]&&ctype(nc,nr)==='desert');
+}
 
-  // ── Cell type ──────────────────────────────────────────
-  function ctype(c, r) {
-    if (c===5 && r===5) return 'oasis';
-    if (GRASS.has(`${c},${r}`)) return 'grass';
-    return 'desert';
-  }
-
-  // ── Move generation ────────────────────────────────────
-  function getSlides(c, r) {
-    const out = [];
-    for (const [dc,dr] of [[0,-1],[0,1],[-1,0],[1,0]]) {
-      let nc=c+dc, nr=r+dr, lc=null, lr=null;
-      while (nc>=0&&nc<11&&nr>=0&&nr<11&&!grid[nc][nr]) {
-        lc=nc; lr=nr; nc+=dc; nr+=dr;
+function render(){
+  const el=document.getElementById('board'); el.innerHTML='';
+  const sSet=new Set(vS.map(([a,b])=>`${a},${b}`));
+  const kSet=new Set(vK.map(([a,b])=>`${a},${b}`));
+  const selKey=sel?`${sel[0]},${sel[1]}`:null;
+  const myTurn=mode==='online'?(myColor===turn):true;
+  const mkLbl=v=>{const d=document.createElement('div');d.className='lbl';d.textContent=v;return d;};
+  el.appendChild(mkLbl(''));
+  for(let c=0;c<11;c++) el.appendChild(mkLbl(ALPHA[c]));
+  for(let r=0;r<11;r++){
+    el.appendChild(mkLbl(r+1));
+    for(let c=0;c<11;c++){
+      const ct=ctype(c,r);
+      const key=`${c},${r}`;
+      const piece=grid[c][r];
+      const isSlide=sSet.has(key), isJump=kSet.has(key), isSel=(key===selKey);
+      const d=document.createElement('div');
+      d.className='cell cell-'+ct+(isSel?' cell-selected':'')+(isSlide?' cell-move':'')+(isJump?' cell-jump':'');
+      if(piece){
+        d.textContent=piece==='black'?'♟':'♙';
+        d.classList.add(piece==='black'?'piece-b':'piece-w');
       }
-      if (lc !== null) out.push([lc, lr]);
-    }
-    return out;
-  }
-
-  function getKnights(c, r) {
-    return [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]
-      .map(([dc,dr]) => [c+dc,r+dr])
-      .filter(([nc,nr]) =>
-        nc>=0&&nc<11&&nr>=0&&nr<11&&!grid[nc][nr]&&ctype(nc,nr)==='desert'
-      );
-  }
-
-  // ── Render ─────────────────────────────────────────────
-  function render() {
-    const el = document.getElementById('board');
-    el.innerHTML = '';
-    const sSet = new Set(vS.map(([a,b])=>`${a},${b}`));
-    const kSet = new Set(vK.map(([a,b])=>`${a},${b}`));
-    const selKey = sel ? `${sel[0]},${sel[1]}` : null;
-    const myTurn = (mode === 'online') ? (myColor === turn) : true;
-
-    // Corner + col labels
-    el.appendChild(mkLbl(''));
-    for (let c=0; c<11; c++) el.appendChild(mkLbl(ALPHA[c]));
-
-    for (let r=0; r<11; r++) {
-      el.appendChild(mkLbl(r+1));
-      for (let c=0; c<11; c++) {
-        const key = `${c},${r}`;
-        const type = ctype(c, r);
-        const cell = document.createElement('div');
-        cell.className = 'cell ' + type;
-        if (!myTurn) cell.classList.add('not-my-turn');
-        if      (key === selKey)  cell.classList.add('sel');
-        else if (sSet.has(key))   cell.classList.add('vs');
-        else if (kSet.has(key))   cell.classList.add('vk');
-        if (type==='oasis' && !grid[c][r]) {
-          const m = document.createElement('div');
-          m.className = 'oasis-mark'; m.textContent = '🌴';
-          cell.appendChild(m);
+      d.onclick=()=>{
+        if(!grid||turn==='done') return;
+        if(!myTurn&&mode==='online') return;
+        const color=mode==='online'?myColor:turn;
+        if(piece&&piece===color){
+          sel=[c,r];
+          vS=getSlides(grid,c,r); vK=getKnights(grid,c,r);
+          render(); return;
         }
-        if (grid[c][r]) {
-          const p = document.createElement('div');
-          p.className = 'piece ' + grid[c][r];
-          p.textContent = grid[c][r]==='black' ? '♞' : '♘';
-          cell.appendChild(p);
+        if(sel&&(isSlide||isJump)){
+          const[fc,fr]=sel;
+          if(mode==='online'){
+            socket.emit('move',{roomId,fc,fr,tc:c,tr:r});
+          } else {
+            grid[c][r]=grid[fc][fr]; grid[fc][fr]=null;
+            if(c===5&&r===5){turn='done';showWin(turn==='done'?`${grid[5][5]==='black'?'흑':'백'} 승리!`:'게임 종료','오아시스 점령!');render();return;}
+            turn=turn==='black'?'white':'black';
+          }
+          sel=null; vS=[]; vK=[]; render(); return;
         }
-        cell.addEventListener('click', () => onCell(c, r));
-        el.appendChild(cell);
-      }
-    }
-  }
-
-  function mkLbl(t) {
-    const d = document.createElement('div');
-    d.className = 'lbl'; d.textContent = t; return d;
-  }
-
-  // ── Status ─────────────────────────────────────────────
-  function updateStatus() {
-    const chip = document.getElementById('turn-chip');
-    const txt  = document.getElementById('turn-text');
-    chip.className = 'chip ' + turn;
-    chip.textContent = turn==='black' ? '♞' : '♘';
-    if (mode === 'online') {
-      const isMyTurn = myColor === turn;
-      txt.textContent = isMyTurn ? '내 차례' : '상대 차례...';
-    } else {
-      txt.textContent = (turn==='black'?'흑':'백') + '의 차례';
-    }
-  }
-
-  function drawTimer() {
-    const num  = document.getElementById('tnum');
-    const fill = document.getElementById('tfill');
-    const m = Math.floor(tLeft/60), s = tLeft%60;
-    num.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-    const urgent = tLeft <= 10;
-    num.classList.toggle('red', urgent);
-    fill.classList.toggle('red', urgent);
-    fill.style.width = (tLeft/60*100) + '%';
-  }
-
-  function updateOnlineHeader() {
-    const hdr = document.getElementById('online-hdr');
-    if (mode !== 'online') { hdr.style.display='none'; return; }
-    const myLabel = myColor==='black'?'흑(♞)':'백(♘)';
-    const oppColor = myColor==='black'?'백(♘)':'흑(♞)';
-    hdr.style.display = 'flex';
-    hdr.innerHTML = `🌐 온라인 매치
-      <span class="oh-sep">|</span>
-      나: <b style="color:#fff">${document.getElementById('ni').value.trim()||'플레이어'} ${myLabel}</b>
-      <span class="oh-sep">vs</span>
-      상대: <b style="color:#fff">${oppName} ${oppColor}</b>`;
-  }
-
-  function showWin(title, desc) {
-    document.getElementById('win-title').textContent = title;
-    document.getElementById('win-desc').textContent = desc || '오아시스에 먼저 도달했습니다! 🌴';
-    document.getElementById('d-win').style.display = 'flex';
-  }
-
-  // ── Interaction ────────────────────────────────────────
-  function onCell(c, r) {
-    if (done) return;
-    if (mode==='online' && myColor !== turn) return;
-
-    const key = `${c},${r}`;
-    const sSet = new Set(vS.map(([a,b])=>`${a},${b}`));
-    const kSet = new Set(vK.map(([a,b])=>`${a},${b}`));
-
-    if (sSet.has(key) || kSet.has(key)) {
-      const [fc,fr] = sel, [tc,tr] = [c,r];
-      const mover = grid[fc][fr];
-      if (mode === 'online') {
-        sock.emit('move', {roomId, fc, fr, tc, tr});
         sel=null; vS=[]; vK=[]; render();
-      } else {
-        grid[tc][tr]=mover; grid[fc][fr]=null;
-        sel=null; vS=[]; vK=[];
-        if (tc===5 && tr===5) {
-          done=true; clearInterval(tId);
-          render();
-          setTimeout(()=>showWin(`${mover==='black'?'흑(♞)':'백(♘)'} 승리! 🎉`), 300);
-          return;
-        }
-        turn=turn==='black'?'white':'black';
-        render(); updateStatus(); startLocalTimer();
-      }
-      return;
+      };
+      el.appendChild(d);
     }
+  }
+  const bt=document.getElementById('badge-turn');
+  if(bt) bt.textContent=(turn==='black'?'♟ 흑':'♙ 백')+' 차례';
+}
 
-    if (grid[c][r] === turn) {
-      sel=[c,r]; vS=getSlides(c,r); vK=getKnights(c,r);
-      render(); return;
-    }
+function showWin(title,desc){
+  document.getElementById('win-title').textContent=title;
+  document.getElementById('win-desc').textContent=desc;
+  document.getElementById('win-overlay').style.display='flex';
+}
 
-    sel=null; vS=[]; vK=[]; render();
+// 말달리자 socket events
+socket.on('waiting',()=>show('s-wait'));
+socket.on('matched',({roomId:rid,myColor:mc,oppName:on,state:st})=>{
+  roomId=rid; myColor=mc; oppName=on; grid=st.grid; turn=st.turn;
+  sel=null; vS=[]; vK=[]; show('s-game');
+  document.getElementById('online-hdr').style.display='flex';
+  document.getElementById('opp-name-lbl').textContent='상대: '+on;
+  document.getElementById('timer-bar').style.display='flex';
+  document.getElementById('badge-you').textContent=(mc==='black'?'♟ 흑 (나)':'♙ 백 (나)');
+  document.getElementById('badge-opp').textContent=(mc==='black'?'♙ 백':'♟ 흑')+' ('+on+')';
+  render();
+});
+socket.on('state',st=>{grid=st.grid;turn=st.turn;sel=null;vS=[];vK=[];render();});
+socket.on('tick',t=>{
+  const el=document.getElementById('timer-num'); if(el) el.textContent=t;
+  const fill=document.getElementById('timer-fill'); if(fill) fill.style.width=(t/60*100)+'%';
+  if(t<=10&&fill) fill.style.background='linear-gradient(90deg,#ef4444,#b91c1c)';
+});
+socket.on('winner',({color,name})=>{
+  const isMe=mode==='online'?(color===myColor):true;
+  showWin(isMe?'🏆 승리!':'💀 패배',`${name}이(가) 오아시스 점령!`);
+});
+socket.on('opp_left',()=>showWin('🏆 승리!','상대방이 나갔습니다'));
+
+// ═══════════════════════════════════════════════════════════
+// BANG! GAME
+// ═══════════════════════════════════════════════════════════
+let bangRoomId=null, bangMyId=socket.id, bangState=null, bangSelectedCard=null, bangPendingTarget=false;
+
+// ── Lobby ─────────────────────────────────────────────────
+function bangJoin(){
+  const name=(document.getElementById('bang-name-input').value.trim()||'플레이어').slice(0,14);
+  socket.emit('bang_join',{name});
+}
+function bangHostStart(){
+  socket.emit('bang_host_start');
+}
+function bangLeaveLobby(){
+  socket.emit('bang_leave_lobby');
+  bangRoomId=null;
+  show('s-select');
+}
+
+socket.on('bang_joined',({roomId})=>{bangRoomId=roomId;});
+socket.on('bang_lobby',({players,hostSid,minPlayers,maxPlayers})=>{
+  const el=document.getElementById('bang-lobby-players');
+  el.innerHTML='';
+  players.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='lobby-player';
+    div.innerHTML=`<span class="lp-num">${i+1}</span><span>${p.name}</span>${p.sid===hostSid?'<span class="lp-host">방장</span>':''}`;
+    el.appendChild(div);
+  });
+  document.getElementById('bang-lobby-count').textContent=`${players.length} / ${maxPlayers}명 (최소 ${minPlayers}명)`;
+  const startBtn=document.getElementById('bang-start-btn');
+  if(players[0]?.sid===socket.id){
+    startBtn.style.display='block';
+    startBtn.disabled=players.length<minPlayers;
+    startBtn.style.opacity=players.length<minPlayers?'0.5':'1';
+    startBtn.textContent=`🎮 게임 시작 (${players.length}명 / 최소 ${minPlayers}명)`;
+  } else {
+    startBtn.style.display='none';
+  }
+});
+socket.on('bang_err',msg=>{
+  const el=document.getElementById('bg-err');
+  if(el){el.textContent=msg;setTimeout(()=>el.textContent='',3000);}
+});
+
+// ── Game start ────────────────────────────────────────────
+socket.on('bang_game_start',({roomId})=>{
+  bangRoomId=roomId;
+  bangMyId=socket.id;
+  bangSelectedCard=null;
+  bangPendingTarget=false;
+  show('s-bang-game');
+});
+
+socket.on('bang_state',state=>{
+  bangState=state;
+  bangMyId=socket.id;
+  bangRenderState(state);
+});
+
+// ── Game over ─────────────────────────────────────────────
+socket.on('bang_game_over',({winner,reason,roles})=>{
+  const icons={sheriff:'⭐',deputy:'💙',outlaw:'💀',renegade:'🃏'};
+  const colors={sheriff:'#fde047',deputy:'#93c5fd',outlaw:'#fca5a5',renegade:'#d8b4fe'};
+  const winnerIcon={sheriff:'⭐',outlaw:'🔫',renegade:'🎭'}[winner]||'🏆';
+  document.getElementById('bg-go-icon').textContent=winnerIcon;
+  document.getElementById('bg-go-title').textContent=reason;
+  const rolesEl=document.getElementById('bg-go-roles');
+  rolesEl.innerHTML='';
+  roles.forEach(p=>{
+    const div=document.createElement('div');
+    div.style.cssText=`background:rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;text-align:center;min-width:90px;`;
+    div.innerHTML=`<div style="font-size:1.5rem">${icons[p.role]||'?'}</div><div style="font-size:.85rem;font-weight:700">${p.name}</div><div style="font-size:.75rem;color:${colors[p.role]||'#9ca3af'}">${roleKrC(p.role)}</div>`;
+    rolesEl.appendChild(div);
+  });
+  document.getElementById('bg-gameover').style.display='flex';
+});
+
+// ── Card helpers ──────────────────────────────────────────
+const CARD_ICON={bang:'🔫',missed:'🤚',beer:'🍺',stagecoach:'🚌',wells_fargo:'🏦',
+  indians:'🏹',duel:'⚔️',gatling:'💥',saloon:'🍻',barrel:'🛡️',dynamite:'💣',
+  jail:'🔒',volcanic:'🌋',schofield:'🔫',remington:'🔫',rev_carabiner:'🔫',
+  winchester:'🔫',scope:'🔭',mustang:'🐴'};
+const CARD_NAME={bang:'BANG!',missed:'MISSED!',beer:'맥주',stagecoach:'역마차',wells_fargo:'웰스파고',
+  indians:'인디언',duel:'결투',gatling:'개틀링',saloon:'살롱',barrel:'통(배럴)',
+  dynamite:'다이너마이트',jail:'감옥',volcanic:'볼카닉',schofield:'스코필드',
+  remington:'레밍턴',rev_carabiner:'리볼버 카빈',winchester:'윈체스터',
+  scope:'조준경',mustang:'무스탕'};
+const CARD_CLASS={bang:'ct-bang',missed:'ct-missed',beer:'ct-beer',
+  stagecoach:'ct-draw',wells_fargo:'ct-draw',indians:'ct-area',gatling:'ct-area',
+  duel:'ct-duel',saloon:'ct-saloon',barrel:'ct-equip',dynamite:'ct-equip',
+  jail:'ct-equip',scope:'ct-equip',mustang:'ct-equip',
+  volcanic:'ct-weapon',schofield:'ct-weapon',remington:'ct-weapon',
+  rev_carabiner:'ct-weapon',winchester:'ct-weapon'};
+
+function roleKrC(r){return{sheriff:'보안관',deputy:'부관',outlaw:'무법자',renegade:'불한당'}[r]||r;}
+function roleIcon(r){return{sheriff:'⭐',deputy:'💙',outlaw:'💀',renegade:'🎭','?':'❓'}[r]||'❓';}
+function roleClass(r){return{sheriff:'role-sheriff',deputy:'role-deputy',outlaw:'role-outlaw',renegade:'role-renegade','?':'role-hidden'}[r]||'role-hidden';}
+
+function needsTarget(type){return['bang','jail','duel'].includes(type);}
+function isEquip(type){return['barrel','dynamite','mustang','scope','volcanic','schofield','remington','rev_carabiner','winchester'].includes(type);}
+function isGlobal(type){return['indians','gatling','saloon','stagecoach','wells_fargo'].includes(type);}
+
+// ── Main render ───────────────────────────────────────────
+function bangRenderState(s){
+  if(!s) return;
+  const myIdx=s.players.findIndex(p=>p.sid===bangMyId);
+  const me=myIdx>=0?s.players[myIdx]:null;
+  const currentPlayer=s.players[s.turnIdx];
+  const isMyTurn=currentPlayer?.sid===bangMyId;
+  const pending=s.pending;
+
+  // Phase badge
+  const phaseText={start:'시작',play:'플레이',discard:'버리기','?':'대기'};
+  const phaseEl=document.getElementById('bg-phase');
+  phaseEl.textContent=phaseText[s.phase]||s.phase;
+
+  // Turn name
+  document.getElementById('bg-turn-name').textContent=currentPlayer?`${currentPlayer.name}의 턴`:'';
+
+  // Players
+  const playersEl=document.getElementById('bg-players');
+  playersEl.innerHTML='';
+  s.players.forEach((p,i)=>{
+    const isMe=p.sid===bangMyId;
+    const isTurn=i===s.turnIdx;
+    const isPending=pending&&(pending.targetSid===p.sid||(pending.pendingSids||[]).includes(p.sid)||pending.duelCurrentSid===p.sid);
+    const isTarget=bangSelectedCard&&needsTarget(bangSelectedCard.type)&&!isMe&&p.alive&&!pending;
+
+    const div=document.createElement('div');
+    div.className='bg-player'+(isMe?' is-me':'')+(isTurn?' is-turn':'')+(p.alive?'':' is-dead')+(isPending?' pending-action':'')+(isTarget?' is-target':'');
+    if(isTarget) div.onclick=()=>bangPlayCard(p.sid);
+
+    // HP hearts
+    let hearts='';
+    for(let h=0;h<p.maxHp;h++) hearts+=`<span class="${h<p.hp?'hp-heart':'hp-empty'}">❤️</span>`;
+
+    // Equipment
+    let equipHtml='';
+    (p.equip||[]).forEach(e=>{ equipHtml+=`<span class="equip-tag">${CARD_ICON[e.type]||''} ${CARD_NAME[e.type]||e.type}</span>`; });
+
+    div.innerHTML=`
+      <div class="pname">${isMe?'👤 ':''} ${p.name}</div>
+      <span class="prole ${roleClass(p.role)}">${roleIcon(p.role)} ${roleKrC(p.role)}</span>
+      <div class="php">${hearts}</div>
+      ${equipHtml?`<div class="pequip">${equipHtml}</div>`:''}
+      <div class="phand-count">🃏 ${p.handCount}장${isTurn?' ← 현재 턴':''}</div>
+    `;
+    playersEl.appendChild(div);
+  });
+
+  // Deck + Discard
+  document.getElementById('bg-deck-count').textContent=s.deckCount+'장';
+  const dt=s.discardTop;
+  if(dt){
+    document.getElementById('bg-discard-icon').textContent=CARD_ICON[dt.type]||'🃟';
+    document.getElementById('bg-discard-info').textContent=(CARD_NAME[dt.type]||dt.type)+' '+dt.suit+(dt.value||'');
   }
 
-  // ── Local timer ────────────────────────────────────────
-  function startLocalTimer() {
-    clearInterval(tId); tLeft=60;
-    tId = setInterval(()=>{
-      if(done){clearInterval(tId);return;}
-      tLeft--;
-      drawTimer();
-      if(tLeft<=0){
-        sel=null; vS=[]; vK=[];
-        turn=turn==='black'?'white':'black';
-        render(); updateStatus(); startLocalTimer();
+  // Log
+  const logEl=document.getElementById('bg-log');
+  logEl.innerHTML=(s.log||[]).map(l=>`<p>${l}</p>`).join('');
+  logEl.scrollTop=logEl.scrollHeight;
+
+  // Pending banner + buttons
+  const pendEl=document.getElementById('bg-pending');
+  const passBtnEl=document.getElementById('bg-pass-btn');
+  const dmgBtnEl=document.getElementById('bg-take-dmg-btn');
+  const duelPassEl=document.getElementById('bg-duel-pass-btn');
+  [passBtnEl,dmgBtnEl,duelPassEl].forEach(b=>{if(b)b.style.display='none';});
+
+  if(pending){
+    const amResponding=pending.targetSid===bangMyId||
+      (pending.pendingSids||[]).includes(bangMyId)||
+      pending.duelCurrentSid===bangMyId;
+    if(amResponding){
+      if(pending.type==='bang'){
+        pendEl.style.display='block';
+        pendEl.innerHTML='⚠️ BANG! 맞았습니다! MISSED! 카드로 막거나 피해를 입으세요.';
+        if(dmgBtnEl) dmgBtnEl.style.display='inline-block';
+      } else if(pending.type==='indians'){
+        pendEl.style.display='block';
+        pendEl.innerHTML='🏹 인디언! BANG! 카드로 막거나 피해를 입으세요.';
+        if(dmgBtnEl) dmgBtnEl.style.display='inline-block';
+      } else if(pending.type==='duel'){
+        pendEl.style.display='block';
+        pendEl.innerHTML='⚔️ 결투! BANG! 카드로 응수하거나 항복하세요.';
+        if(duelPassEl) duelPassEl.style.display='inline-block';
       }
-    },1000);
-    drawTimer();
+    } else {
+      pendEl.style.display='block';
+      const who=pending.duelCurrentSid?s.players.find(p=>p.sid===pending.duelCurrentSid)?.name:
+                pending.targetSid?s.players.find(p=>p.sid===pending.targetSid)?.name:'누군가';
+      pendEl.innerHTML=`⏳ ${who}의 응답 대기 중...`;
+    }
+  } else {
+    pendEl.style.display='none';
   }
 
-  // ── Game init ──────────────────────────────────────────
-  function initGame() {
-    grid=Array.from({length:11},()=>Array(11).fill(null));
-    for(const[c,r] of BLACK_START) grid[c][r]='black';
-    for(const[c,r] of WHITE_START) grid[c][r]='white';
-    turn='black'; done=false;
-    sel=null; vS=[]; vK=[];
-    updateStatus(); render();
+  // End turn button
+  const endTurnBtn=document.getElementById('bg-end-turn-btn');
+  if(endTurnBtn){
+    endTurnBtn.style.display=(isMyTurn&&s.phase==='play'&&!pending)?'inline-block':'none';
   }
 
-  // ── Apply server state (online) ───────────────────────
-  function applyState(state) {
-    grid=state.grid; turn=state.turn; done=state.done; tLeft=state.timeLeft;
-    sel=null; vS=[]; vK=[];
-    updateStatus(); render(); drawTimer();
+  // Hand
+  const handEl=document.getElementById('bg-hand-cards');
+  handEl.innerHTML='';
+  if(me?.hand){
+    const isDiscard=isMyTurn&&s.phase==='discard';
+    const isResponding=pending&&(pending.targetSid===bangMyId||(pending.pendingSids||[]).includes(bangMyId)||pending.duelCurrentSid===bangMyId);
+    const canPlay=(!pending&&isMyTurn&&s.phase==='play')||isResponding;
+
+    me.hand.forEach(card=>{
+      const isSelected=bangSelectedCard?.id===card.id;
+      const isDisabled=!canPlay&&!isDiscard;
+
+      // For response, only certain cards are playable
+      let isResponseCard=false;
+      if(isResponding){
+        if(pending.type==='bang'||pending.type==='indians') isResponseCard=card.type==='missed'||(card.type==='beer'&&me.hp===1);
+        else if(pending.type==='duel') isResponseCard=card.type==='bang';
+      }
+      const cardDisabled=isDiscard?false:(isResponding?!isResponseCard:isDisabled);
+
+      const div=document.createElement('div');
+      div.className=`bg-card ${CARD_CLASS[card.type]||''}${isSelected?' selected':''}${cardDisabled?' disabled':''}`;
+      div.innerHTML=`
+        <span class="card-suit">${card.suit||''}</span>
+        <span class="card-icon">${CARD_ICON[card.type]||'🃟'}</span>
+        <span class="card-name">${CARD_NAME[card.type]||card.type}</span>
+        <span class="card-val">${card.value||''}</span>
+      `;
+
+      if(!cardDisabled){
+        div.onclick=()=>{
+          if(isDiscard){
+            bangDiscardCard(card.id); return;
+          }
+          if(isResponding){
+            bangRespond(card.id); return;
+          }
+          // Normal play
+          if(needsTarget(card.type)){
+            bangSelectedCard=isSelected?null:card;
+            document.getElementById('bg-selected-info').textContent=bangSelectedCard?`"${CARD_NAME[card.type]}" 선택됨 → 대상 플레이어 클릭`:'';
+            bangRenderState(bangState);
+          } else if(isEquip(card.type)||isGlobal(card.type)){
+            bangSelectedCard=null;
+            document.getElementById('bg-selected-info').textContent='';
+            bangPlayCard(null,card.id);
+          } else {
+            bangSelectedCard=null;
+            document.getElementById('bg-selected-info').textContent='';
+            bangPlayCard(null,card.id);
+          }
+        };
+      }
+      handEl.appendChild(div);
+    });
+
+    document.getElementById('bg-hand-count').textContent=me.hand.length+'장';
+
+    // Discard hint
+    if(isMyTurn&&s.phase==='discard'){
+      const excess=me.hand.length-me.hp;
+      const hint=document.createElement('div');
+      hint.style.cssText='width:100%;color:#fca5a5;font-size:.8rem;margin-top:4px;';
+      hint.textContent=`카드를 ${excess}장 버려야 합니다 (HP: ${me.hp})`;
+      handEl.appendChild(hint);
+    }
   }
+}
 
-  // ── Online socket ──────────────────────────────────────
-  function setupSock() {
-    sock.off('waiting').off('matched').off('state').off('tick').off('winner').off('opp_left');
+// ── Actions ───────────────────────────────────────────────
+function bangPlayCard(targetSid, overrideCardId){
+  if(!bangRoomId) return;
+  const cardId=overrideCardId!=null?overrideCardId:(bangSelectedCard?.id);
+  if(cardId==null) return;
+  socket.emit('bang_play',{roomId:bangRoomId, cardId, targetSid:targetSid||undefined});
+  bangSelectedCard=null;
+  document.getElementById('bg-selected-info').textContent='';
+}
 
-    sock.on('waiting', () => show('s-wait'));
+function bangRespond(cardId){
+  if(!bangRoomId) return;
+  socket.emit('bang_respond',{roomId:bangRoomId, cardId:cardId||null});
+}
 
-    sock.on('matched', ({roomId:rid, myColor:mc, oppName:on, state}) => {
-      roomId=rid; myColor=mc; oppName=on;
-      applyState(state);
-      show('s-game');
-      updateOnlineHeader();
-    });
+function bangEndTurn(){
+  if(!bangRoomId) return;
+  bangSelectedCard=null;
+  socket.emit('bang_end_turn',{roomId:bangRoomId});
+}
 
-    sock.on('state', state => {
-      applyState(state);
-    });
-
-    sock.on('tick', tl => { tLeft=tl; drawTimer(); });
-
-    sock.on('winner', ({color, name}) => {
-      done=true;
-      const isMe = color===myColor;
-      showWin(
-        isMe ? '🎉 내가 승리!' : `${name} 승리!`,
-        isMe ? '오아시스에 먼저 도달했습니다! 🌴' : '상대방이 오아시스에 도달했습니다.'
-      );
-    });
-
-    sock.on('opp_left', () => {
-      done=true;
-      showWin('🎉 내가 승리!', '상대방이 연결을 끊었습니다.');
-    });
-  }
-
-  // ── Menu buttons ───────────────────────────────────────
-  document.getElementById('btn-online').addEventListener('click', ()=>{
-    const name = document.getElementById('ni').value.trim() || '플레이어';
-    mode='online'; myColor=null; roomId=null;
-    document.getElementById('wait-sub').textContent=`닉네임: ${name}`;
-    show('s-wait');
-    if(!sock) sock=io();
-    setupSock();
-    sock.emit('join',{name});
-  });
-
-  document.getElementById('btn-local').addEventListener('click', ()=>{
-    mode='local'; myColor=null;
-    document.getElementById('online-hdr').style.display='none';
-    initGame();
-    show('s-game');
-    startLocalTimer();
-  });
-
-  document.getElementById('btn-cancel').addEventListener('click', ()=>{
-    if(sock) sock.emit('cancel');
-    show('s-menu');
-  });
-
-  document.getElementById('btn-back').addEventListener('click', ()=>{
-    clearInterval(tId);
-    if(mode==='online' && sock) sock.emit('cancel');
-    document.getElementById('d-win').style.display='none';
-    show('s-menu');
-  });
-
-  document.getElementById('btn-rst').addEventListener('click', ()=>{
-    document.getElementById('d-win').style.display='none';
-    clearInterval(tId);
-    show('s-menu');
-  });
-
-  document.getElementById('btn-manual').addEventListener('click', ()=>{
-    document.getElementById('d-manual').style.display='flex';
-  });
-  document.getElementById('btn-manual-close').addEventListener('click', ()=>{
-    document.getElementById('d-manual').style.display='none';
-  });
-  document.getElementById('d-manual').addEventListener('click', (e)=>{
-    if (e.target === document.getElementById('d-manual'))
-      document.getElementById('d-manual').style.display='none';
-  });
+function bangDiscardCard(cardId){
+  if(!bangRoomId) return;
+  socket.emit('bang_discard',{roomId:bangRoomId, cardId});
+}
 </script>
 </body>
 </html>
