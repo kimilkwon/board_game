@@ -165,50 +165,46 @@
     /* ── Cards ───────────────────────────────────────────── */
     .bg-card{
       width:84px;height:120px;border-radius:10px;
-      border:2px solid rgba(255,255,255,.12);
-      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+      border:2px solid rgba(255,255,255,.18);
+      display:flex;flex-direction:column;justify-content:space-between;
       cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;
-      padding:6px 5px;position:relative;overflow:hidden;
-      box-shadow:2px 4px 14px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);
+      padding:5px;position:relative;overflow:hidden;
+      box-shadow:2px 4px 14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.1);
+      background:#1a1a2e;
     }
-    /* Subtle diagonal texture */
-    .bg-card::before{
-      content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
-      background:repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(0,0,0,.06) 7px,rgba(0,0,0,.06) 8px);
-    }
-    /* Shine overlay */
-    .bg-card::after{
-      content:'';position:absolute;top:0;left:0;right:0;height:40%;border-radius:8px 8px 0 0;pointer-events:none;
-      background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 100%);
-    }
-    .bg-card:hover{transform:translateY(-9px);box-shadow:2px 14px 30px rgba(0,0,0,.75);}
-    .bg-card.selected{border-color:#ffd700!important;box-shadow:0 0 22px rgba(255,215,0,.65);transform:translateY(-11px);}
+    .card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;}
+    .card-overlay{position:absolute;bottom:0;left:0;right:0;height:36px;border-radius:0 0 8px 8px;
+      background:linear-gradient(transparent,rgba(0,0,0,.82));pointer-events:none;}
+    .card-shine{position:absolute;top:0;left:0;right:0;height:38%;border-radius:8px 8px 0 0;pointer-events:none;
+      background:linear-gradient(180deg,rgba(255,255,255,.13) 0%,transparent 100%);}
+    .bg-card:hover{transform:translateY(-9px);box-shadow:2px 14px 30px rgba(0,0,0,.8);}
+    .bg-card.selected{border-color:#ffd700!important;box-shadow:0 0 22px rgba(255,215,0,.7);transform:translateY(-11px);}
     .bg-card.disabled{opacity:.38;cursor:not-allowed;}
-    .bg-card.disabled:hover{transform:none;box-shadow:2px 4px 14px rgba(0,0,0,.55);}
-
-    /* Corner pip */
-    .card-corner{display:flex;flex-direction:column;align-items:center;line-height:1;z-index:1;}
+    .bg-card.disabled:hover{transform:none;box-shadow:2px 4px 14px rgba(0,0,0,.6);}
+    .card-corner{display:flex;flex-direction:column;align-items:center;line-height:1;z-index:2;position:relative;
+      background:rgba(0,0,0,.55);border-radius:4px;padding:1px 3px;}
     .card-tl{align-self:flex-start;}
     .card-br{align-self:flex-end;transform:rotate(180deg);}
-    .card-corner .cv{font-size:.68rem;font-weight:900;text-shadow:0 1px 4px rgba(0,0,0,.7);}
-    .card-corner .cs{font-size:.6rem;opacity:.85;text-shadow:0 1px 3px rgba(0,0,0,.6);}
-
-    /* Center art */
-    .card-center{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;}
-    .card-icon{font-size:1.8rem;filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));line-height:1;}
-    .card-name{font-size:.53rem;font-weight:900;text-align:center;line-height:1.25;
-      text-shadow:0 1px 4px rgba(0,0,0,.8);letter-spacing:.04em;word-break:keep-all;}
-
-    /* ── Card type gradients (western theme) ── */
-    .ct-bang{background:linear-gradient(155deg,#6b0000 0%,#991b1b 45%,#b91c1c 100%);border-color:#ef4444;}
-    .ct-missed{background:linear-gradient(155deg,#1a1f2e 0%,#2d3748 50%,#3d4a60 100%);border-color:#94a3b8;}
-    .ct-beer{background:linear-gradient(155deg,#3d1a00 0%,#7c3800 50%,#a16207 100%);border-color:#d97706;}
-    .ct-draw{background:linear-gradient(155deg,#2d1a00 0%,#78350f 50%,#9a5a00 100%);border-color:#f59e0b;}
-    .ct-area{background:linear-gradient(155deg,#3a0e00 0%,#7c2d12 50%,#9a3412 100%);border-color:#fb923c;}
-    .ct-duel{background:linear-gradient(155deg,#2d0050 0%,#581c87 50%,#7c3aad 100%);border-color:#c084fc;}
-    .ct-saloon{background:linear-gradient(155deg,#00201f 0%,#134e4a 50%,#0f766e 100%);border-color:#2dd4bf;}
-    .ct-equip{background:linear-gradient(155deg,#07153a 0%,#1e3a5f 50%,#1e40af 100%);border-color:#60a5fa;}
-    .ct-weapon{background:linear-gradient(155deg,#08080f 0%,#13132b 50%,#1e1e3f 100%);border-color:#818cf8;}
+    .card-corner .cv{font-size:.65rem;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
+    .card-corner .cs{font-size:.58rem;color:#fff;opacity:.9;}
+    .card-foot{position:absolute;bottom:4px;left:0;right:0;text-align:center;z-index:2;
+      font-size:.5rem;font-weight:900;color:#fff;text-shadow:0 1px 4px #000;letter-spacing:.04em;word-break:keep-all;}
+    /* Fallback (no image) */
+    .card-fallback{position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:4px;border-radius:8px;}
+    .card-fallback .fi{font-size:1.8rem;filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));}
+    .card-fallback .fn{font-size:.52rem;font-weight:900;text-align:center;
+      text-shadow:0 1px 4px rgba(0,0,0,.8);padding:0 4px;}
+    /* Border tint per type + fallback gradient */
+    .ct-bang{border-color:#ef4444;} .ct-bang .card-fallback{background:linear-gradient(155deg,#6b0000,#b91c1c);}
+    .ct-missed{border-color:#94a3b8;} .ct-missed .card-fallback{background:linear-gradient(155deg,#1a1f2e,#3d4a60);}
+    .ct-beer{border-color:#d97706;} .ct-beer .card-fallback{background:linear-gradient(155deg,#3d1a00,#a16207);}
+    .ct-draw{border-color:#f59e0b;} .ct-draw .card-fallback{background:linear-gradient(155deg,#2d1a00,#9a5a00);}
+    .ct-area{border-color:#fb923c;} .ct-area .card-fallback{background:linear-gradient(155deg,#3a0e00,#9a3412);}
+    .ct-duel{border-color:#c084fc;} .ct-duel .card-fallback{background:linear-gradient(155deg,#2d0050,#6b21a8);}
+    .ct-saloon{border-color:#2dd4bf;} .ct-saloon .card-fallback{background:linear-gradient(155deg,#00201f,#0f766e);}
+    .ct-equip{border-color:#60a5fa;} .ct-equip .card-fallback{background:linear-gradient(155deg,#07153a,#1e40af);}
+    .ct-weapon{border-color:#818cf8;} .ct-weapon .card-fallback{background:linear-gradient(155deg,#08080f,#1e1e3f);}
 
     /* Action buttons */
     .bg-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
@@ -626,11 +622,34 @@ socket.on('bang_game_over',({winner,reason,roles})=>{
   document.getElementById('bg-gameover').style.display='flex';
 });
 
+// ── Card builder ──────────────────────────────────────────
+function buildCardHTML(card){
+  const cv=card.value||'';
+  const cs=card.suit||'';
+  const name=CARD_NAME[card.type]||card.type;
+  const img=CARD_IMG[card.type];
+  const corner=`<div class="card-corner card-tl"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>`;
+  const cornerBr=`<div class="card-corner card-br"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>`;
+  if(img){
+    return `${corner}<img class="card-img" src="${img}" alt="${name}"><div class="card-overlay"></div><div class="card-shine"></div><div class="card-foot">${name}</div>${cornerBr}`;
+  }
+  // Fallback (missed, stagecoach)
+  return `${corner}<div class="card-fallback"><span class="fi">${CARD_ICON[card.type]||'🃟'}</span><span class="fn">${name}</span></div>${cornerBr}`;
+}
+
 // ── Card helpers ──────────────────────────────────────────
 const CARD_ICON={bang:'🔫',missed:'🤚',beer:'🍺',stagecoach:'🚌',wells_fargo:'🏦',
   indians:'🏹',duel:'⚔️',gatling:'💥',saloon:'🍻',barrel:'🛡️',dynamite:'💣',
   jail:'🔒',volcanic:'🌋',schofield:'🔫',remington:'🔫',rev_carabiner:'🔫',
   winchester:'🔫',scope:'🔭',mustang:'🐴'};
+const CARD_IMG={
+  bang:'images/bang.png', beer:'images/beer.png', wells_fargo:'images/wells_fargo.png',
+  indians:'images/indians.png', duel:'images/duel.png', gatling:'images/gatling.png',
+  saloon:'images/saloon.png', barrel:'images/barrel.png', dynamite:'images/dynamite.png',
+  jail:'images/jail.png', volcanic:'images/volcanic.png', schofield:'images/schofield.png',
+  remington:'images/remington.png', rev_carabiner:'images/rev_carabine.png',
+  winchester:'images/winchester.png', scope:'images/scope.png', mustang:'images/mustang.png',
+};
 const CARD_NAME={bang:'BANG!',missed:'MISSED!',beer:'맥주',stagecoach:'역마차',wells_fargo:'웰스파고',
   indians:'인디언',duel:'결투',gatling:'개틀링',saloon:'살롱',barrel:'통(배럴)',
   dynamite:'다이너마이트',jail:'감옥',volcanic:'볼카닉',schofield:'스코필드',
@@ -705,13 +724,7 @@ function bangRenderState(s){
   const discardEl=document.getElementById('bg-discard');
   if(dt){
     discardEl.className=`bg-discard bg-card ${CARD_CLASS[dt.type]||''}`;
-    discardEl.innerHTML=`
-      <div class="card-corner card-tl"><span class="cv">${dt.value||''}</span><span class="cs">${dt.suit||''}</span></div>
-      <div class="card-center">
-        <div class="card-icon">${CARD_ICON[dt.type]||'🃟'}</div>
-        <div class="card-name">${CARD_NAME[dt.type]||dt.type}</div>
-      </div>
-      <div class="card-corner card-br"><span class="cv">${dt.value||''}</span><span class="cs">${dt.suit||''}</span></div>`;
+    discardEl.innerHTML=buildCardHTML(dt);
   } else {
     discardEl.className='bg-discard';
     discardEl.innerHTML=`<span style="font-size:1.4rem">🃟</span><span style="font-size:.6rem;color:#6b7280">버린 카드</span>`;
@@ -785,16 +798,7 @@ function bangRenderState(s){
 
       const div=document.createElement('div');
       div.className=`bg-card ${CARD_CLASS[card.type]||''}${isSelected?' selected':''}${cardDisabled?' disabled':''}`;
-      const cv=card.value||'';
-      const cs=card.suit||'';
-      div.innerHTML=`
-        <div class="card-corner card-tl"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>
-        <div class="card-center">
-          <div class="card-icon">${CARD_ICON[card.type]||'🃟'}</div>
-          <div class="card-name">${CARD_NAME[card.type]||card.type}</div>
-        </div>
-        <div class="card-corner card-br"><span class="cv">${cv}</span><span class="cs">${cs}</span></div>
-      `;
+      div.innerHTML=buildCardHTML(card);
 
       if(!cardDisabled){
         div.onclick=()=>{
